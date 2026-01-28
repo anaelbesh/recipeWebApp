@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Test - node03</title>
+    <style>
+        #chat-box { width: 400px; height: 300px; border: 1px solid #ccc; overflow-y: scroll; margin-bottom: 10px; padding: 10px; display: flex; flex-direction: column; }
+        .msg { margin: 5px; padding: 5px; border-radius: 5px; background: #f1f1f1; width: fit-content; }
+        .own { background: #dcf8c6; align-self: flex-end; }
+    </style>
+</head>
+<body>
+<h3>Chat Test (Dor)</h3>
+<div id="chat-box"></div>
+<input type="text" id="msg-input" placeholder="Type a message...">
+<button onclick="send()">Send</button>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+    const SERVER_URL = "http://node03.cs.colman.ac.il:4000";
+    const MY_ID = "user_2";
+    const PARTNER_ID = "user_1";
+
+    const socket = io(SERVER_URL);
+    const chatBox = document.getElementById('chat-box');
+
+    // 1. Function to display a message in the UI
+    function appendMessage(data, tempId) {
+        const div = document.createElement('div');
+        div.className = 'msg' + (data.senderId === MY_ID ? ' own' : '');
+        div.id = tempId; // נותנים ל-div את ה-ID הזמני
+        div.innerHTML = `${data.message} <small class="status"></small>`;
+        chatBox.appendChild(div);
+    }
+
+    // 2. FETCH HISTORY (The "Persistence" check)
+    async function loadHistory() {
+        try {
+            // Note: Replace with your actual API path
+            const response = await fetch(`${SERVER_URL}/api/chat/history/${PARTNER_ID}`);
+            console.log(response);
+            const history = await response.json();
+            history.forEach(appendMessage);
+        } catch (err) {
+            console.error("Failed to load history:", err);
+        }
+    }
+
+    // 3. SOCKET LOGIC
+    socket.on("connect", () => {
+        console.log("Connected to Socket!");
+        socket.emit("join", MY_ID);
+        loadHistory(); // Load old messages as soon as we connect
+    });
+
+    socket.on("receive_message", (data) => {
+        appendMessage(data);
+    });
+
+    function send() {
+        const input = document.getElementById('msg-input');
+        const tempId = Date.now().toString(); // מזהה זמני ייחודי לכל הודעה שיוצאת מהדף
+
+        const data = {
+            tempId: tempId,
+            senderId: MY_ID,
+            receiverId: PARTNER_ID,
+            message: input.value
+        };
+
+        appendMessage(data, tempId);
+
+        socket.emit("send_message", data);
+        input.value = '';
+    }
+
+    socket.on("message_received_ack", (ack) => {
+        const msgElement = document.getElementById(ack.tempId);
+        if (msgElement) {
+            const statusElement = msgElement.querySelector('.status');
+            statusElement.innerText = " Accepted!";
+            statusElement.style.color = "blue";
+        }
+    });
+
+</script>
+</body>
+</html>
