@@ -14,7 +14,7 @@ npm install
 PORT=4000
 NODE_ENV=development
 MONGO_HOST=localhost
-MONGO_PORT=27017
+MONGO_PORT=21771
 MONGO_USER=your_mongo_username
 MONGO_PASSWORD=your_mongo_password
 MONGO_DB=recipes
