@@ -11,7 +11,7 @@ const ChatMessageSchema = new Schema({
     senderId: String,
     receiverId: String,
     message: String,
-    isRead: { type: Boolean, default: false }, // שדה חובה להיסטוריה
+    isRead: { type: Boolean, default: false },
     timestamp: { type: Date, default: Date.now }
 });
 
