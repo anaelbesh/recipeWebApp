@@ -7,11 +7,12 @@ export interface IChatMessage extends Document {
     createdAt: Date;
 }
 
-const ChatMessageSchema: Schema = new Schema({
-    senderId: { type: String, required: true },
-    receiverId: { type: String, required: true },
-    message: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
+const ChatMessageSchema = new Schema({
+    senderId: String,
+    receiverId: String,
+    message: String,
+    isRead: { type: Boolean, default: false }, // שדה חובה להיסטוריה
+    timestamp: { type: Date, default: Date.now }
 });
 
 export default mongoose.model<IChatMessage>("ChatMessage", ChatMessageSchema);
