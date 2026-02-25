@@ -1,13 +1,7 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import ChatMessage from "../models/ChatMessage";
+import { AuthRequest } from "./common";
 
-// User settings, similar to how it is saved on JWT
-interface AuthRequest extends Request {
-    user?: {
-        _id: string;
-        email: string
-    };
-}
 
 export const getChatHistory = async (req: AuthRequest, res: Response) => {
     try {
@@ -16,7 +10,7 @@ export const getChatHistory = async (req: AuthRequest, res: Response) => {
         // Dor's comment: we need to have this and use JWT:
         // const userId = req.user?._id;
         //
-        // For testing purposes, i will support sending the user id from the URL
+        // For testing purposes, I will support sending the user id from the URL
         // Remove this after we have JWT!
         const userId = req.user?._id || req.query.userId;
 

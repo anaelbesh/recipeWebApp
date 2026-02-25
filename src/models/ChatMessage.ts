@@ -1,11 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
-
-export interface IChatMessage extends Document {
-    senderId: string;
-    receiverId: string;
-    message: string;
-    createdAt: Date;
-}
+import { Schema, model} from "mongoose";
 
 const ChatMessageSchema = new Schema({
     senderId: String,
@@ -15,4 +8,4 @@ const ChatMessageSchema = new Schema({
     timestamp: { type: Date, default: Date.now }
 });
 
-export default mongoose.model<IChatMessage>("ChatMessage", ChatMessageSchema);
+export default model("ChatMessage", ChatMessageSchema);

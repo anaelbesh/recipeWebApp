@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Chat Test - node03</title>
     <style>
-        #chat-box { width: 400px; height: 300px; border: 1px solid #ccc; overflow-y: scroll; margin-bottom: 10px; padding: 10px; display: flex; flex-direction: column; }
-        .msg { margin: 5px; padding: 5px; border-radius: 5px; background: #f1f1f1; width: fit-content; }
+        #chat-box { width: 400px; height: 300px; border: 1px solid #ccc; overflow-y: scroll; margin-bottom: 10px; padding: 10px; display: flex; flex-direction: column; font-family: sans-serif; }
+        .msg { margin: 5px; padding: 8px; border-radius: 8px; background: #f1f1f1; width: fit-content; max-width: 80%; position: relative; }
         .own { background: #dcf8c6; align-self: flex-end; }
+
+        /* New styles for time and status */
+        .msg-content { display: block; margin-bottom: 4px; }
+        .msg-footer { display: flex; justify-content: flex-end; align-items: center; font-size: 10px; color: #888; gap: 5px; }
+        .time { font-style: italic; }
+        .status { font-weight: bold; }
     </style>
 </head>
 <body>
@@ -22,47 +28,58 @@
     const PARTNER_ID = "user_1";
 
     const socket = io(SERVER_URL);
-    const chatBox = document.getElementById('chat-box');
+    const chatBox = document.getElementById("chat-box");
 
-    // 1. Function to display a message in the UI
+    // Helper to format time as HH:MM
+    function formatTime(timestamp) {
+        const date = timestamp ? new Date(timestamp) : new Date();
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // 1. Updated Function to display a message with time
     function appendMessage(data, tempId) {
-        const div = document.createElement('div');
-        div.className = 'msg' + (data.senderId === MY_ID ? ' own' : '');
-        // Use permanent ID if available, otherwise use tempId
+        const div = document.createElement("div");
+        div.className = "msg" + (data.senderId === MY_ID ? " own" : "");
+
         const finalId = data._id || tempId;
         div.id = finalId;
 
-        div.innerHTML = `${data.message} <small class="status"></small>`;
+        // Use createdAt from DB, or current time for new outgoing messages
+        const timeStr = formatTime(data.createdAt);
+
+        div.innerHTML = `
+            <span class="msg-content">${data.message}</span>
+            <div class="msg-footer">
+                <span class="time">${timeStr}</span>
+                <small class="status"></small>
+            </div>
+        `;
+
         chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
     }
 
     async function loadHistory() {
         try {
-            // Remove the ?userId=${MY_ID} part after we have JWT Support
             const response = await fetch(`${SERVER_URL}/api/chat/history/${PARTNER_ID}?userId=${MY_ID}`);
             const history = await response.json();
 
-            chatBox.innerHTML = '';
-
+            chatBox.innerHTML = "";
             history.forEach(msg => {
-                // Add to the chat
                 appendMessage(msg);
 
-                // Update msgs status
                 const msgElement = document.getElementById(msg._id);
                 if (msgElement && msg.senderId === MY_ID) {
-                    const statusElement = msgElement.querySelector('.status');
+                    const statusElement = msgElement.querySelector(".status");
                     if (msg.isRead) {
-                        statusElement.innerText = "Read";
+                        statusElement.innerText = "Message read";
                         statusElement.style.color = "blue";
                     } else {
-                        statusElement.innerText = "Delivered";
+                        statusElement.innerText = "Message received";
                         statusElement.style.color = "gray";
                     }
                 }
 
-                // If we have messages i got and they dont marked as "read" for multiple reasons
-                // // i was offline when i got this message for example - i will do it now.
                 if (msg.receiverId === MY_ID && !msg.isRead) {
                     socket.emit("mark_as_read", {
                         messageId: msg._id,
@@ -75,17 +92,13 @@
         }
     }
 
-    // 3. SOCKET LOGIC
     socket.on("connect", () => {
-        console.log("Connected to Socket!");
         socket.emit("join", MY_ID);
-        loadHistory(); // Load old messages as soon as we connect
+        loadHistory();
     });
 
     socket.on("receive_message", (data) => {
         appendMessage(data);
-
-        // Tell the server we rade this message
         socket.emit("mark_as_read", {
             messageId: data._id,
             senderId: data.senderId
@@ -95,37 +108,36 @@
     socket.on("message_read_update", (ack) => {
         const msgElement = document.getElementById(ack.messageId);
         if (msgElement) {
-            const statusElement = msgElement.querySelector('.status');
-            statusElement.innerText = "Read";
+            const statusElement = msgElement.querySelector(".status");
+            statusElement.innerText = "Message read";
             statusElement.style.color = "lightskyblue";
         }
     });
 
     function send() {
-        const input = document.getElementById('msg-input');
-        const tempId = Date.now().toString();
+        const input = document.getElementById("msg-input");
+        if (!input.value.trim()) return;
 
+        const tempId = Date.now().toString();
         const data = {
             tempId: tempId,
             senderId: MY_ID,
             receiverId: PARTNER_ID,
-            message: input.value
+            message: input.value,
+            createdAt: new Date().toISOString() // Add local time for immediate display
         };
 
         appendMessage(data, tempId);
-
         socket.emit("send_message", data);
-        input.value = '';
+        input.value = "";
     }
 
     socket.on("message_received_ack", (ack) => {
         const msgElement = document.getElementById(ack.tempId);
         if (msgElement) {
-            // Change the ID from temp to permanent so we can find it later for the "Read" update
             msgElement.id = ack.permanentId;
-
-            const statusElement = msgElement.querySelector('.status');
-            statusElement.innerText = " Delivered";
+            const statusElement = msgElement.querySelector(".status");
+            statusElement.innerText = "✓";
             statusElement.style.color = "gray";
         }
     });
