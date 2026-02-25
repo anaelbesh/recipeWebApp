@@ -16,7 +16,8 @@
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-    const SERVER_URL = "http://node03.cs.colman.ac.il:4000";
+    // const SERVER_URL = "http://node03.cs.colman.ac.il:4000";
+    const SERVER_URL = "http://localhost:4000";
     const MY_ID = "user_1";
     const PARTNER_ID = "user_2";
 
@@ -27,19 +28,48 @@
     function appendMessage(data, tempId) {
         const div = document.createElement('div');
         div.className = 'msg' + (data.senderId === MY_ID ? ' own' : '');
-        div.id = tempId; // נותנים ל-div את ה-ID הזמני
+        // Use permanent ID if available, otherwise use tempId
+        const finalId = data._id || tempId;
+        div.id = finalId;
+
         div.innerHTML = `${data.message} <small class="status"></small>`;
         chatBox.appendChild(div);
     }
 
-    // 2. FETCH HISTORY (The "Persistence" check)
     async function loadHistory() {
         try {
-            // Note: Replace with your actual API path
-            const response = await fetch(`${SERVER_URL}/api/chat/history/${PARTNER_ID}`);
-            console.log(response);
+            // Remove the ?userId=${MY_ID} part after we have JWT Support
+            const response = await fetch(`${SERVER_URL}/api/chat/history/${PARTNER_ID}?userId=${MY_ID}`);
             const history = await response.json();
-            history.forEach(appendMessage);
+
+            chatBox.innerHTML = '';
+            console.log("dor: ", history)
+            history.forEach(msg => {
+                // Add to the chat
+                appendMessage(msg);
+
+                // Update msgs status
+                const msgElement = document.getElementById(msg._id);
+                if (msgElement && msg.senderId === MY_ID) {
+                    const statusElement = msgElement.querySelector('.status');
+                    if (msg.isRead) {
+                        statusElement.innerText = "Read";
+                        statusElement.style.color = "blue";
+                    } else {
+                        statusElement.innerText = "Delivered";
+                        statusElement.style.color = "gray";
+                    }
+                }
+
+                // If we have messages i got and they dont marked as "read" for multiple reasons
+                // // i was offline when i got this message for example - i will do it now.
+                if (msg.receiverId === MY_ID && !msg.isRead) {
+                    socket.emit("mark_as_read", {
+                        messageId: msg._id,
+                        senderId: msg.senderId
+                    });
+                }
+            });
         } catch (err) {
             console.error("Failed to load history:", err);
         }
@@ -54,11 +84,26 @@
 
     socket.on("receive_message", (data) => {
         appendMessage(data);
+
+        // Tell the server we rade this message
+        socket.emit("mark_as_read", {
+            messageId: data._id,
+            senderId: data.senderId
+        });
+    });
+
+    socket.on("message_read_update", (ack) => {
+        const msgElement = document.getElementById(ack.messageId);
+        if (msgElement) {
+            const statusElement = msgElement.querySelector('.status');
+            statusElement.innerText = "Read";
+            statusElement.style.color = "lightskyblue";
+        }
     });
 
     function send() {
         const input = document.getElementById('msg-input');
-        const tempId = Date.now().toString(); // מזהה זמני ייחודי לכל הודעה שיוצאת מהדף
+        const tempId = Date.now().toString();
 
         const data = {
             tempId: tempId,
@@ -76,9 +121,12 @@
     socket.on("message_received_ack", (ack) => {
         const msgElement = document.getElementById(ack.tempId);
         if (msgElement) {
+            // Change the ID from temp to permanent so we can find it later for the "Read" update
+            msgElement.id = ack.permanentId;
+
             const statusElement = msgElement.querySelector('.status');
-            statusElement.innerText = " Accepted!";
-            statusElement.style.color = "blue";
+            statusElement.innerText = " Delivered";
+            statusElement.style.color = "gray";
         }
     });
 

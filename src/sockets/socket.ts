@@ -4,8 +4,8 @@ import ChatMessage from "../models/ChatMessage";
 export const initSocket = (server: any) => {
     const io = new Server(server, {
         cors: {
-            // In production, restrict this to your specific domain
-            origin: "*",
+            origin: process.env.NODE_ENV === "production"
+                ?  process.env.SERVER_ADDRESS: "*", // Test - all open, prod - closed to our SERVER_ADDRESS
             methods: ["GET", "POST"]
         },
     });
@@ -21,7 +21,10 @@ export const initSocket = (server: any) => {
 
         // Handle sending messages
         socket.on("send_message", async (data: {
+            // Temp id is being used to generate id and show the message immediately to the user, when this
+            // message is saved to db, we will use the permanent id we got from the record ID
             tempId: string;
+
             senderId: string;
             receiverId: string;
             message: string
@@ -56,6 +59,22 @@ export const initSocket = (server: any) => {
                     tempId: data.tempId,
                     error: "Failed to persist message"
                 });
+            }
+        });
+
+        socket.on("mark_as_read", async (data: { messageId: string, senderId: string }) => {
+            try {
+                // 1. Update the database (Assumes your ChatMessage model has an 'isRead' field)
+                await ChatMessage.findByIdAndUpdate(data.messageId, { isRead: true });
+
+                console.log(`👁️ Message ${data.messageId} marked as read`);
+
+                // 2. Notify the ORIGINAL sender that their message was read
+                io.to(data.senderId).emit("message_read_update", {
+                    messageId: data.messageId
+                });
+            } catch (err) {
+                console.error("❌ Error marking message as read:", err);
             }
         });
 

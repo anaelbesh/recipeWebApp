@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/anaelbesh/recipeWebApp#readme",
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "mongoose": "^9.1.5",
