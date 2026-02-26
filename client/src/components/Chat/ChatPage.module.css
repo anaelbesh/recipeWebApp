@@ -1,0 +1,17 @@
+.appContainer {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  max-width: 900px;
+  height: 85vh;
+  max-height: 700px;
+}
+
+@media (max-width: 768px) {
+  .appContainer {
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+  }
+}
+
