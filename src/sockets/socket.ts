@@ -64,10 +64,10 @@ export const initSocket = (server: any) => {
 
         socket.on("mark_as_read", async (data: { messageId: string, senderId: string }) => {
             try {
-                // 1. Update the database (Assumes your ChatMessage model has an 'isRead' field)
+                // 1. Update the database's ChatMessage model "isRead" field
                 await ChatMessage.findByIdAndUpdate(data.messageId, { isRead: true });
 
-                console.log(`👁️ Message ${data.messageId} marked as read`);
+                console.log(`Message ${data.messageId} marked as read`);
 
                 // 2. Notify the ORIGINAL sender that their message was read
                 io.to(data.senderId).emit("message_read_update", {
