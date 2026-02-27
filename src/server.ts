@@ -7,14 +7,17 @@ import { connectMongo } from "./db";
 import { initSocket } from "./sockets/socket";
 import { getChatHistory } from "./controllers/chatController";
 import recipeRoutes from "./routes/recipeRoutes";
+import authRoutes from "./routes/authRoutes";
+import { setupSwagger } from "./config/swagger";
 
 export const app = express();
 
-function prerequisites(){
+function prerequisites() {
     const allowedOrigins = [
         process.env.SERVER_ADDRESS,
-        "http://localhost:4000"   // Local server
-    ];
+        process.env.CLIENT_ORIGIN || "http://localhost:5173",
+        "http://localhost:4000",  // Local server
+    ].filter(Boolean) as string[];
 
     app.use(cors({
         origin: (origin, callback) => {
@@ -24,7 +27,7 @@ function prerequisites(){
                 callback(new Error("Not allowed by CORS"));
             }
         },
-        methods: ["GET", "POST"],
+        methods: ["GET", "POST", "PUT", "DELETE"],
         allowedHeaders: ["Content-Type", "Authorization"]
     }));
 
@@ -41,6 +44,7 @@ function initializeRoutes(app: express.Application) {
     app.get("/api/chat/history/:partnerId", getChatHistory);
 
     app.use("/api/recipes", recipeRoutes);
+    app.use("/api/auth", authRoutes);
 
     // Serve React chat app at /chat
     app.get("/chat", (req, res) => {
@@ -49,12 +53,16 @@ function initializeRoutes(app: express.Application) {
     });
 }
 
-async function runServer(){
+async function runServer() {
     prerequisites();
-    const server = http.createServer(app); // Create a server that wraps express HTTPS
+    const server = http.createServer(app);
     app.use(express.json());
     initSocket(server);
     initializeRoutes(app);
+
+    // Swagger docs
+    setupSwagger(app);
+
     await connectMongo();
 
     const port = Number(process.env.PORT || 4000);
@@ -65,9 +73,7 @@ async function runServer(){
             console.log(`Socket.io is ready at http://node03.cs.colman.ac.il:${port}/socket.io/`);
         });
     }
-
 }
-
 
 async function start() {
     await runServer();
