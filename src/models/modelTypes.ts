@@ -20,7 +20,10 @@ export interface IComment extends Document {
 export interface IUser extends Document {
   username: string;
   email: string;
-  password: string;
+  password?: string;
+  provider: 'local' | 'google' | 'facebook';
+  providerId?: string;
+  profilePicture?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

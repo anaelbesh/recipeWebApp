@@ -35,7 +35,8 @@ export const register = async (req: Request, res: Response) => {
     const user = await User.create({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      provider: 'local',
     });
 
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
@@ -71,7 +72,13 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (user.provider !== 'local') {
+      return res.status(400).json({
+        message: `This account uses ${user.provider} sign-in. Please log in with ${user.provider} instead.`,
+      });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password!);
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }

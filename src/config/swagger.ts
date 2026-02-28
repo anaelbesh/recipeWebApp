@@ -34,6 +34,16 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
           username: { type: "string", example: "johndoe" },
           email: { type: "string", example: "john@example.com" },
+          provider: {
+            type: "string",
+            enum: ["local", "google", "facebook"],
+            example: "local",
+          },
+          profilePicture: {
+            type: "string",
+            nullable: true,
+            example: "https://lh3.googleusercontent.com/a/photo.jpg",
+          },
         },
       },
       AuthResponse: {
@@ -275,7 +285,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             },
           },
           "400": {
-            description: "Email and password are required",
+            description: "Email and password are required, or account uses an OAuth provider",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -376,6 +386,125 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           },
           "500": {
             description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    // ═══════════════════  OAUTH  ═════════════════════════
+    "/api/auth/google": {
+      get: {
+        tags: ["OAuth"],
+        summary: "Redirect to Google sign-in",
+        description:
+          "Redirects the user to Google's OAuth 2.0 consent screen. After approval, Google redirects back to /api/auth/google/callback.",
+        responses: {
+          "302": {
+            description: "Redirect to Google consent screen",
+          },
+        },
+      },
+    },
+    "/api/auth/google/callback": {
+      get: {
+        tags: ["OAuth"],
+        summary: "Google OAuth callback",
+        description:
+          "Handles the redirect from Google after the user approves or denies access. On success, issues JWT tokens and redirects to the client app with tokens in query params.",
+        parameters: [
+          {
+            name: "code",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            description: "Authorization code from Google",
+          },
+          {
+            name: "state",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            description: "CSRF state token",
+          },
+        ],
+        responses: {
+          "302": {
+            description:
+              "Redirect to CLIENT_ORIGIN/auth/callback?accessToken=...&refreshToken=...",
+          },
+          "400": {
+            description: "Missing state or authorization code",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "500": {
+            description: "Google authentication failed",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/auth/facebook": {
+      get: {
+        tags: ["OAuth"],
+        summary: "Redirect to Facebook sign-in",
+        description:
+          "Redirects the user to Facebook's OAuth dialog. After approval, Facebook redirects back to /api/auth/facebook/callback.",
+        responses: {
+          "302": {
+            description: "Redirect to Facebook login dialog",
+          },
+        },
+      },
+    },
+    "/api/auth/facebook/callback": {
+      get: {
+        tags: ["OAuth"],
+        summary: "Facebook OAuth callback",
+        description:
+          "Handles the redirect from Facebook after the user approves or denies access. On success, issues JWT tokens and redirects to the client app with tokens in query params.",
+        parameters: [
+          {
+            name: "code",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            description: "Authorization code from Facebook",
+          },
+          {
+            name: "state",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            description: "CSRF state token",
+          },
+        ],
+        responses: {
+          "302": {
+            description:
+              "Redirect to CLIENT_ORIGIN/auth/callback?accessToken=...&refreshToken=...",
+          },
+          "400": {
+            description: "Missing state or authorization code",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "500": {
+            description: "Facebook authentication failed",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },

@@ -11,3 +11,17 @@ export const authConfig = {
   isProduction: process.env.NODE_ENV === "production",
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
 };
+
+export const oauthConfig = {
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    callbackUrl: `${process.env.OAUTH_CALLBACK_BASE_URL || "http://localhost:3000"}/api/auth/google/callback`,
+  },
+  facebook: {
+    appId: process.env.FACEBOOK_APP_ID || "",
+    appSecret: process.env.FACEBOOK_APP_SECRET || "",
+    callbackUrl: `${process.env.OAUTH_CALLBACK_BASE_URL || "http://localhost:3000"}/api/auth/facebook/callback`,
+  },
+  stateSecret: process.env.OAUTH_STATE_SECRET || process.env.JWT_SECRET || "default_state_secret",
+};
