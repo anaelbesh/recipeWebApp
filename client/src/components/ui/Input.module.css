@@ -1,0 +1,43 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: #667eea;
+}
+
+.inputError {
+  border-color: #ef4444;
+}
+
+.error {
+  font-size: 12px;
+  color: #ef4444;
+}
+
+@media (min-width: 480px) {
+  .input {
+    font-size: 14px;
+  }
+}
