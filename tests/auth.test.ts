@@ -1,11 +1,11 @@
 import request from "supertest";
 import mongoose from "mongoose";
-import { app } from "../src/server";
-import User from "../src/models/userModel";
-import RefreshToken from "../src/models/refreshTokenModel";
-import { connectMongo } from "../src/db";
+import { app } from "../be/src/server";
+import User from "../be/src/models/userModel";
+import RefreshToken from "../be/src/models/refreshTokenModel";
+import { connectMongo } from "../be/src/db";
 import { userData } from "./utils";
-import * as oauthService from "../src/services/oauthService";
+import * as oauthService from "../be/src/services/oauthService";
 
 beforeAll(async () => {
   await connectMongo();

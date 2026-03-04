@@ -1,8 +1,8 @@
 import "dotenv/config";
 import mongoose from "mongoose";
-import { Like } from "../../src/models/Like";
-import { Comment } from "../../src/models/Comment";
-import { connectMongo } from "../../src/db";
+import { Like } from "../../be/src/models/Like";
+import { Comment } from "../../be/src/models/Comment";
+import { connectMongo } from "../../be/src/db";
 
 describe('Database Model Tests', () => {
     beforeAll(async () => {

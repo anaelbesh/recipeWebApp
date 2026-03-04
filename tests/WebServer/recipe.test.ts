@@ -1,8 +1,8 @@
 import request from "supertest";
 import mongoose from "mongoose";
-import { app } from "../../src/server";
-import { Comment } from "../../src/models/Comment";
-import { Like } from "../../src/models/Like";
+import { app } from "../../be/src/server";
+import { Comment } from "../../be/src/models/Comment";
+import { Like } from "../../be/src/models/Like";
 
 describe("Recipe API Integration Tests", () => {
     const dummyRecipeId = new mongoose.Types.ObjectId().toString();
