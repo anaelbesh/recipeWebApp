@@ -86,7 +86,7 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
           </Button>
           <Button
             onClick={handleSave}
-            loading={saving}
+            isLoading={saving}
             disabled={!hasChanges || saving}
           >
             Save

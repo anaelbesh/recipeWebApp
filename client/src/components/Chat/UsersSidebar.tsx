@@ -7,7 +7,6 @@ interface UsersSidebarProps {
   users: User[];
   selectedPartner: User | null;
   onSelectPartner: (user: User) => void;
-  onChangeCurrentUser: (userId: string) => void;
 }
 
 function getInitials(name: string): string {
@@ -19,7 +18,6 @@ export function UsersSidebar({
   users,
   selectedPartner,
   onSelectPartner,
-  onChangeCurrentUser,
 }: UsersSidebarProps) {
   const [searchFilter, setSearchFilter] = useState('');
 
@@ -43,21 +41,6 @@ export function UsersSidebar({
             <div className={styles.currentUserStatus}>Online</div>
           </div>
         </div>
-      </div>
-
-      {/* Dev Mode: User Selector */}
-      <div className={styles.devBanner}>
-        <span>🔧 Dev Mode - Login as:</span>
-        <select
-          value={currentUser._id}
-          onChange={(e) => onChangeCurrentUser(e.target.value)}
-        >
-          {users.map(user => (
-            <option key={user._id} value={user._id}>
-              {user.name}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* Search */}
@@ -86,11 +69,9 @@ export function UsersSidebar({
               <div className={styles.userItemName}>{user.name}</div>
               <div className={styles.userItemEmail}>{user.email}</div>
             </div>
-            <div className={`${styles.userItemStatus} ${user.online ? styles.online : ''}`} />
           </div>
         ))}
       </div>
     </div>
   );
 }
-

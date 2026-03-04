@@ -1,17 +1,14 @@
 import { Router } from "express";
-// Named import for comments
 import { addComment } from "../controllers/commentController";
-// Default import for likes
 import likeController from "../controllers/likeController";
+import { verifyToken } from "../middleware/authMiddleware";
 
 const router = Router();
 
-// Route for adding a comment
 // POST /api/recipes/:recipeId/comments
-router.post("/:recipeId/comments", addComment);
+router.post("/:recipeId/comments", verifyToken, addComment);
 
-// Route for toggling a like
 // POST /api/recipes/:recipeId/likes
-router.post("/:recipeId/likes", likeController.toggle);
+router.post("/:recipeId/likes", verifyToken, likeController.toggle);
 
 export default router;

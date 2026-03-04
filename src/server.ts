@@ -6,6 +6,8 @@ import path from "path";
 import { connectMongo } from "./db";
 import { initSocket } from "./sockets/socket";
 import { getChatHistory } from "./controllers/chatController";
+import { getAllUsers } from "./controllers/userController";
+import { verifyToken } from "./middleware/authMiddleware";
 import recipeRoutes from "./routes/recipeRoutes";
 import authRoutes from "./routes/authRoutes";
 import { setupSwagger } from "./config/swagger";
@@ -41,7 +43,8 @@ function prerequisites() {
 }
 
 function initializeRoutes(app: express.Application) {
-    app.get("/api/chat/history/:partnerId", getChatHistory);
+    app.get("/api/chat/history/:partnerId", verifyToken, getChatHistory);
+    app.get("/api/users", verifyToken, getAllUsers);
 
     app.use("/api/recipes", recipeRoutes);
     app.use("/api/auth", authRoutes);
