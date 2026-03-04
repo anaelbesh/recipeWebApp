@@ -7,6 +7,8 @@ const REFRESH_KEY = 'refreshToken';
  * Thin wrapper around localStorage for token persistence.
  * Both access and refresh tokens are stored here — the backend uses
  * body-based token exchange (no cookies), so localStorage is the correct approach.
+ * User info (username, email) is embedded in the JWT payload so no separate
+ * user cache is needed.
  */
 export const tokenStorage = {
   getAccess: () => localStorage.getItem(TOKEN_KEY),

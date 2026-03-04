@@ -14,8 +14,8 @@ import {
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
-const generateTokens = (userId: string) => {
-  const accessToken = jwt.sign({ id: userId }, authConfig.accessTokenSecret, {
+const generateTokens = (userId: string, username: string, email: string) => {
+  const accessToken = jwt.sign({ id: userId, username, email }, authConfig.accessTokenSecret, {
     expiresIn: authConfig.accessTokenTtl,
   });
   const refreshToken = jwt.sign(
@@ -67,7 +67,7 @@ const finishOAuthHandshake = async (
   user: Awaited<ReturnType<typeof findOrCreateOAuthUser>>,
   res: Response
 ) => {
-  const { accessToken, refreshToken } = generateTokens(user._id.toString());
+  const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.username, user.email);
 
   await RefreshToken.deleteMany({ userId: user._id });
   await RefreshToken.create({
@@ -81,6 +81,10 @@ const finishOAuthHandshake = async (
   const redirectUrl = new URL(`${authConfig.clientOrigin}/auth/callback`);
   redirectUrl.searchParams.set('accessToken', accessToken);
   redirectUrl.searchParams.set('refreshToken', refreshToken);
+  redirectUrl.searchParams.set('username', user.username);
+  redirectUrl.searchParams.set('email', user.email);
+  redirectUrl.searchParams.set('userId', user._id.toString());
+  if (user.profilePicture) redirectUrl.searchParams.set('profilePicture', user.profilePicture);
   return res.redirect(redirectUrl.toString());
 };
 

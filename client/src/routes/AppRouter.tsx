@@ -9,71 +9,13 @@ import {
 } from 'react-router-dom';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
+import { ProfilePage } from '../pages/ProfilePage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { tokenStorage } from '../api/client';
-import { authApi } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
-import type { User } from '../types/auth';
 import { ChatPage } from '../components/Chat';
 
-// Placeholder pages — implemented in upcoming chunks
-function ProfilePage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
-
-  return (
-    <div style={{ padding: 40, maxWidth: 600, margin: '0 auto' }}>
-      <h1>Profile</h1>
-      <p>
-        <strong>ID:</strong> {user?.id}
-      </p>
-      <p>
-        <strong>Username:</strong> {user?.username || '—'}
-      </p>
-      <p>
-        <strong>Email:</strong> {user?.email || '—'}
-      </p>
-      <p style={{ color: '#6b7280', marginTop: 16 }}>
-        Full profile page coming in Chunk 2
-      </p>
-      <a
-        href="/chat"
-        style={{
-          display: 'inline-block',
-          marginTop: 16,
-          padding: '8px 20px',
-          background: '#667eea',
-          color: 'white',
-          borderRadius: 8,
-          fontWeight: 600,
-          textDecoration: 'none',
-        }}
-      >
-        Go to Chat
-      </a>
-      <button
-        onClick={handleLogout}
-        style={{
-          marginTop: 24,
-          padding: '8px 20px',
-          background: '#ef4444',
-          color: 'white',
-          border: 'none',
-          borderRadius: 8,
-          cursor: 'pointer',
-        }}
-      >
-        Logout
-      </button>
-    </div>
-  );
-}
-
+// TODO - implement feedPage
 function FeedPage() {
   return (
     <div style={{ padding: 40 }}>
@@ -99,10 +41,16 @@ function OAuthCallback() {
     if (accessToken && refreshToken) {
       tokenStorage.setAccess(accessToken);
       tokenStorage.setRefresh(refreshToken);
-      authApi.me().then((u: User | null) => {
-        if (u) setUser(u);
-        navigate('/profile', { replace: true });
-      });
+      // Build the user directly from query params — no JWT decode needed
+      const userId = params.get('userId');
+      const username = params.get('username');
+      const email = params.get('email');
+      const profilePicture = params.get('profilePicture') ?? undefined;
+      if (userId && username && email) {
+        const u = { id: userId, username, email, profilePicture };
+        setUser(u);
+      }
+      navigate('/profile', { replace: true });
     } else {
       navigate('/login', { replace: true });
     }

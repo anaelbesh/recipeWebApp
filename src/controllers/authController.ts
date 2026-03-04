@@ -4,10 +4,11 @@ import jwt from 'jsonwebtoken';
 import User from '../models/userModel';
 import RefreshToken from '../models/refreshTokenModel';
 import { authConfig } from '../config/auth';
+// import { AuthRequest } from '../middleware/authMiddleware'; // needed when userController is added
 
 // Helper function to generate tokens
-const generateTokens = (userId: string): { accessToken: string; refreshToken: string } => {
-    const accessToken = jwt.sign({ id: userId }, authConfig.accessTokenSecret, { expiresIn: authConfig.accessTokenTtl });
+const generateTokens = (userId: string, username: string, email: string): { accessToken: string; refreshToken: string } => {
+    const accessToken = jwt.sign({ id: userId, username, email }, authConfig.accessTokenSecret, { expiresIn: authConfig.accessTokenTtl });
     const refreshToken = jwt.sign(
       { id: userId, jti: Math.random().toString(36) + Date.now().toString(36) }, 
       authConfig.refreshTokenSecret, 
@@ -39,7 +40,7 @@ export const register = async (req: Request, res: Response) => {
       provider: 'local',
     });
 
-    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+    const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.username, user.email);
 
     await RefreshToken.create({
       userId: user._id,
@@ -83,7 +84,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+    const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.username, user.email);
 
     // Delete old refresh tokens for this user to avoid duplicates
     await RefreshToken.deleteMany({ userId: user._id });
@@ -123,7 +124,10 @@ export const refreshToken = async (req: Request, res: Response) => {
 
     await RefreshToken.deleteOne({ token: refreshToken });
 
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokens(decoded.id);
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokens(user._id.toString(), user.username, user.email);
 
     await RefreshToken.create({
       userId: decoded.id,

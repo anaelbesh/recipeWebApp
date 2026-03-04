@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     authApi
       .me()
-      .then(setUser)
+      .then((u) => { if (u) setUser(u); }) // never overwrite with null
       .finally(() => setIsLoading(false));
   }, []);
 
