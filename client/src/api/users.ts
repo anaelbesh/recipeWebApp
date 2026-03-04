@@ -23,16 +23,18 @@ export const usersApi = {
   ): Promise<User> => {
     if (USE_MOCK) {
       await delay(600);
+      // Mock echoes back what was sent; the caller should merge with
+      // existing AuthContext fields (e.g. email) since the mock can't know them.
       return {
         id: userId,
         username: payload.username ?? 'mockuser',
-        email: 'mock@example.com',
+        email: '', // caller merges the real email from AuthContext
         profilePicture: payload.profilePicture,
       };
     }
     // Real implementation (uncomment when ready):
-    // const { data } = await apiClient.put<User>(`/users/${userId}`, payload);
-    // return data;
+    // const { data } = await apiClient.put<{ user: User }>('/auth/me', payload);
+    // return data.user;
     throw new Error('Not implemented');
   },
 };

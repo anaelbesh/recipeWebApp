@@ -23,7 +23,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         scheme: "bearer",
         bearerFormat: "JWT",
         description:
-          "JWT access token obtained from /api/auth/login or /api/auth/register",
+          "JWT access token obtained from /api/auth/login, /api/auth/register, or OAuth callback. Payload contains { id, username, email }.",
       },
     },
     schemas: {
@@ -434,7 +434,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         responses: {
           "302": {
             description:
-              "Redirect to CLIENT_ORIGIN/auth/callback?accessToken=...&refreshToken=...",
+              "Redirect to CLIENT_ORIGIN/auth/callback?accessToken=...&refreshToken=...&userId=...&username=...&email=...&profilePicture=... (profilePicture omitted if not set)",
           },
           "400": {
             description: "Missing state or authorization code",
@@ -493,7 +493,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         responses: {
           "302": {
             description:
-              "Redirect to CLIENT_ORIGIN/auth/callback?accessToken=...&refreshToken=...",
+              "Redirect to CLIENT_ORIGIN/auth/callback?accessToken=...&refreshToken=...&userId=...&username=...&email=...&profilePicture=... (profilePicture omitted if not set)",
           },
           "400": {
             description: "Missing state or authorization code",

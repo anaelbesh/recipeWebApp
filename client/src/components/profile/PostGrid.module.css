@@ -1,0 +1,19 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.empty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.95rem;
+  padding: 2rem 0;
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

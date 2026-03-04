@@ -37,9 +37,8 @@ export const authApi = {
   },
 
   /**
-   * Restore the current user from the stored access token.
-   * The backend JWT payload only contains { id }, so we decode it client-side.
-   * TODO: replace with a real GET /api/users/me endpoint when the backend adds one.
+   * Restore the current user by decoding the stored access token.
+   * The JWT now includes { id, username, email } so no backend call is needed.
    */
   me: async (): Promise<User | null> => {
     const token = tokenStorage.getAccess();
@@ -48,8 +47,10 @@ export const authApi = {
       const parts = token.split('.');
       if (parts.length !== 3) return null;
       const payload = JSON.parse(atob(parts[1]));
+      const id = payload.id ?? payload._id ?? '';
+      if (!id) return null;
       return {
-        id: payload.id ?? payload._id ?? '',
+        id,
         username: payload.username ?? '',
         email: payload.email ?? '',
       };
