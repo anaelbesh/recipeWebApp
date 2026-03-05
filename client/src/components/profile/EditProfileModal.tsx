@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { usersApi, type UpdateProfilePayload } from '../../api/users';
+import { usersApi } from '../../api/users';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { FormError } from '../ui/FormError';
@@ -15,6 +15,7 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
   const { user, setUser } = useAuth();
 
   const [username, setUsername] = useState(user?.username ?? '');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState(
     user?.profilePicture ?? '',
   );
@@ -34,15 +35,13 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
       return;
     }
 
-    const payload: UpdateProfilePayload = {};
-    if (trimmed !== user.username) payload.username = trimmed;
-    if (avatarPreview !== (user.profilePicture ?? ''))
-      payload.profilePicture = avatarPreview;
+    const form = new FormData();
+    if (trimmed !== user.username) form.append('username', trimmed);
+    if (avatarFile) form.append('avatar', avatarFile);
 
     setSaving(true);
     try {
-      const updated = await usersApi.updateProfile(user.id, payload);
-      // Keep the email from the current user context since mock may not carry it
+      const updated = await usersApi.updateProfile(form);
       setUser({ ...user, ...updated, email: user.email });
       onClose();
     } catch {
@@ -68,7 +67,10 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
           <AvatarUploader
             src={avatarPreview || undefined}
             username={username}
-            onChange={setAvatarPreview}
+            onChange={(file, preview) => {
+              setAvatarFile(file);
+              setAvatarPreview(preview);
+            }}
             size={80}
           />
           <span className={styles.avatarHint}>Click to change photo</span>

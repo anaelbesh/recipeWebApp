@@ -1,11 +1,15 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import styles from './AvatarUploader.module.css';
 
 interface AvatarUploaderProps {
   src?: string;
   username?: string;
-  /** Called with a base64 data-URL when the user picks a file */
-  onChange?: (dataUrl: string) => void;
+  /**
+   * Called when the user picks a file.
+   * `file`    — the raw File object for FormData upload.
+   * `preview` — a base64 data-URL for immediate display.
+   */
+  onChange?: (file: File, preview: string) => void;
   /** If false, clicking does nothing (view-only mode) */
   editable?: boolean;
   size?: number;
@@ -23,6 +27,10 @@ export function AvatarUploader({
   size = 96,
 }: AvatarUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [imgError, setImgError] = useState(false);
+
+  // Reset error state when src changes (e.g. user uploads a new photo)
+  useEffect(() => { setImgError(false); }, [src]);
 
   const initials = username
     .split(' ')
@@ -41,7 +49,7 @@ export function AvatarUploader({
 
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === 'string') onChange(reader.result);
+      if (typeof reader.result === 'string') onChange(file, reader.result);
     };
     reader.readAsDataURL(file);
     // Reset so the same file can be re-selected
@@ -56,8 +64,13 @@ export function AvatarUploader({
       role={editable ? 'button' : undefined}
       tabIndex={editable ? 0 : undefined}
     >
-      {src ? (
-        <img src={src} alt={username} className={styles.img} />
+      {src && !imgError ? (
+        <img
+          src={src}
+          alt={username}
+          className={styles.img}
+          onError={() => setImgError(true)}
+        />
       ) : (
         <span className={styles.initials}>{initials}</span>
       )}

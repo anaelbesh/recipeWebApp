@@ -37,23 +37,16 @@ export const authApi = {
   },
 
   /**
-   * Restore the current user by decoding the stored access token.
-   * The JWT now includes { id, username, email } so no backend call is needed.
+   * Restore the current user by fetching the full profile from the DB.
+   * Uses GET /api/users/me — requires a valid access token (attached automatically
+   * by the apiClient request interceptor). Falls back to null if no token or request fails.
+   * This ensures profilePicture and other DB fields are always up-to-date after refresh.
    */
   me: async (): Promise<User | null> => {
-    const token = tokenStorage.getAccess();
-    if (!token) return null;
+    if (!tokenStorage.getAccess()) return null;
     try {
-      const parts = token.split('.');
-      if (parts.length !== 3) return null;
-      const payload = JSON.parse(atob(parts[1]));
-      const id = payload.id ?? payload._id ?? '';
-      if (!id) return null;
-      return {
-        id,
-        username: payload.username ?? '',
-        email: payload.email ?? '',
-      };
+      const { data } = await apiClient.get<{ user: User }>('/users/me');
+      return data.user;
     } catch {
       return null;
     }

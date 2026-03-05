@@ -5,7 +5,7 @@ module.exports = {
     // This tells Jest to transform .ts files using ts-jest
     transform: {
         '^.+\\.tsx?$': ['ts-jest', {
-            tsconfig: 'tsconfig.json',
+            tsconfig: 'tsconfig.test.json',
         }],
     },
     // Adjust this to match your folder structure exactly

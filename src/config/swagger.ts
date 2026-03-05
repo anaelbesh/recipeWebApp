@@ -152,25 +152,9 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         type: "object",
         required: ["content"],
         properties: {
-          userId: {
-            type: "string",
-            description: "User ID (temporary – will be replaced by JWT)",
-            example: "665f1a2b3c4d5e6f7a8b9c0d",
-          },
           content: {
             type: "string",
             example: "Great recipe, loved it!",
-          },
-        },
-      },
-      LikeToggleRequest: {
-        type: "object",
-        required: ["userId"],
-        properties: {
-          userId: {
-            type: "string",
-            description: "User ID toggling the like",
-            example: "665f1a2b3c4d5e6f7a8b9c0d",
           },
         },
       },
@@ -519,6 +503,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
       post: {
         tags: ["Recipes"],
         summary: "Add a comment to a recipe",
+        security: [{ BearerAuth: [] }],
         parameters: [
           {
             name: "recipeId",
@@ -553,6 +538,14 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               },
             },
           },
+          "401": {
+            description: "Unauthorized – missing or invalid token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
         },
       },
     },
@@ -562,6 +555,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         summary: "Toggle like on a recipe",
         description:
           "If the user has not liked the recipe, a like is created. If the user already liked it, the like is removed.",
+        security: [{ BearerAuth: [] }],
         parameters: [
           {
             name: "recipeId",
@@ -571,14 +565,6 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             description: "The recipe's MongoDB ObjectId",
           },
         ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/LikeToggleRequest" },
-            },
-          },
-        },
         responses: {
           "200": {
             description: "Unliked (like removed)",
@@ -596,6 +582,179 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               },
             },
           },
+          "401": {
+            description: "Unauthorized – missing or invalid token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    // ═══════════════════  USERS  ══════════════════════════
+    "/api/users/me": {
+      get: {
+        tags: ["Users"],
+        summary: "Get current user profile",
+        description: "Returns the full profile of the authenticated user (from DB, not just JWT).",
+        security: [{ BearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Current user profile",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { user: { $ref: "#/components/schemas/UserResponse" } },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "User not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+      put: {
+        tags: ["Users"],
+        summary: "Update current user profile",
+        description: "Updates the authenticated user's username and/or avatar. Accepts multipart/form-data. Avatar is saved to disk; its URL is stored in the database.",
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  username: { type: "string", example: "newUsername" },
+                  avatar: { type: "string", format: "binary", description: "Image file (jpg/png/webp, max 5 MB)" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Updated user profile",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { user: { $ref: "#/components/schemas/UserResponse" } },
+                },
+              },
+            },
+          },
+          "400": { description: "No fields to update or invalid file type", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+    },
+    "/api/users": {
+      get: {
+        tags: ["Users"],
+        summary: "Get all users",
+        description: "Returns a list of all registered users (passwords excluded).",
+        security: [{ BearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "List of users",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    users: { type: "array", items: { $ref: "#/components/schemas/UserResponse" } },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+    },
+    "/api/users/{id}": {
+      get: {
+        tags: ["Users"],
+        summary: "Get user by ID",
+        description: "Returns a single user's public profile.",
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" }, description: "MongoDB ObjectId of the user" }],
+        responses: {
+          "200": {
+            description: "User profile",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { user: { $ref: "#/components/schemas/UserResponse" } },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "User not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+      put: {
+        tags: ["Users"],
+        summary: "Update user by ID (admin / self)",
+        description: "Updates username, email, or password for the specified user.",
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  username: { type: "string", example: "newUsername" },
+                  email: { type: "string", example: "new@example.com" },
+                  password: { type: "string", example: "newPassword123" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Updated user",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { user: { $ref: "#/components/schemas/UserResponse" } },
+                },
+              },
+            },
+          },
+          "400": { description: "No valid fields provided", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "User not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+      delete: {
+        tags: ["Users"],
+        summary: "Delete user by ID",
+        description: "Deletes the user and cascades: removes their comments and refresh tokens. Post cascade is added in Chunk 3.",
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": {
+            description: "User deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { message: { type: "string", example: "User deleted successfully" } },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "User not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
     },
@@ -606,6 +765,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         summary: "Get chat history with a partner",
         description:
           "Returns all messages between the authenticated user and the specified partner, sorted by creation date.",
+        security: [{ BearerAuth: [] }],
         parameters: [
           {
             name: "partnerId",
@@ -613,13 +773,6 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             required: true,
             schema: { type: "string" },
             description: "The partner user's MongoDB ObjectId",
-          },
-          {
-            name: "userId",
-            in: "query",
-            required: false,
-            schema: { type: "string" },
-            description: "User ID (temporary query param – will be replaced by JWT)",
           },
         ],
         responses: {
