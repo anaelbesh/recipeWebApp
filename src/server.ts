@@ -6,6 +6,8 @@ import path from "path";
 import { connectMongo } from "./db";
 import { initSocket } from "./sockets/socket";
 import { getChatHistory } from "./controllers/chatController";
+import { getAllUsers } from "./controllers/userController";
+import { verifyToken } from "./middleware/authMiddleware";
 import recipeRoutes from "./routes/recipeRoutes";
 import authRoutes from "./routes/authRoutes";
 import { setupSwagger } from "./config/swagger";
@@ -35,19 +37,20 @@ function prerequisites() {
     const publicPath = path.join(__dirname, "..", "public");
     app.use(express.static(publicPath));
 
-    // Serve React app static files from client/dist
+    // Serve React app static files from client/dist at root
     const clientDistPath = path.join(__dirname, "..", "client", "dist");
-    app.use("/chat", express.static(clientDistPath));
+    app.use(express.static(clientDistPath));
 }
 
 function initializeRoutes(app: express.Application) {
-    app.get("/api/chat/history/:partnerId", getChatHistory);
+    app.get("/api/chat/history/:partnerId", verifyToken, getChatHistory);
+    app.get("/api/users", verifyToken, getAllUsers);
 
     app.use("/api/recipes", recipeRoutes);
     app.use("/api/auth", authRoutes);
 
-    // Serve React chat app at /chat
-    app.get("/chat", (req, res) => {
+    // serve index.html for all non-API routes (/login, /chat, /profile, etc.)
+    app.use((req, res) => {
         const clientDistPath = path.join(__dirname, "..", "client", "dist");
         res.sendFile(path.join(clientDistPath, "index.html"));
     });
@@ -79,4 +82,4 @@ async function start() {
     await runServer();
 }
 
-start().then(r => {});
+start().then(() => {});

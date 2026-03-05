@@ -7,12 +7,8 @@ export const addComment = async (req: AuthRequest, res: Response) => {
         const { recipeId } = req.params;
         const { content } = req.body;
 
-        // Dor's comment: we need to have this and use JWT:
-        // const userId = req.user?._id;
-        //
-        // For testing purposes, I will support sending the user id from the URL
-        // Remove this after we have JWT!
-        const userId = req.user?._id || req.body.userId;
+        // userId comes from the verified JWT token
+        const userId = req.user?.id;
 
         if (!content) {
             return res.status(400).json({ message: "Comment content is required" });
@@ -20,7 +16,7 @@ export const addComment = async (req: AuthRequest, res: Response) => {
 
         const newComment = await Comment.create({
             user: userId,
-            recipe: recipeId,
+            recipe: recipeId as string,
             content: content
         });
 

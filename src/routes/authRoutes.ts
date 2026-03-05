@@ -6,13 +6,14 @@ import {
   facebookRedirect,
   facebookCallback,
 } from '../controllers/oauthController';
+import { verifyToken } from '../middleware/authMiddleware';
 
 const router = Router();
 
 // Local auth
 router.post('/register', register);
 router.post('/login', login);
-router.post('/logout', logout);
+router.post('/logout', verifyToken, logout);
 router.post('/refresh', refreshToken);
 
 // Google OAuth
