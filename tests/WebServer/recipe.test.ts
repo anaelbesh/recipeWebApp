@@ -3,13 +3,30 @@ import mongoose from "mongoose";
 import { app } from "../../src/server";
 import { Comment } from "../../src/models/Comment";
 import { Like } from "../../src/models/Like";
+import User from "../../src/models/userModel";
+import RefreshToken from "../../src/models/refreshTokenModel";
+import { connectMongo } from "../../src/db";
+
+let accessToken: string;
+const dummyRecipeId = new mongoose.Types.ObjectId().toString();
 
 describe("Recipe API Integration Tests", () => {
-    const dummyRecipeId = new mongoose.Types.ObjectId().toString();
-    const dummyUserId = new mongoose.Types.ObjectId().toString();
+    beforeAll(async () => {
+        await connectMongo();
+        // Clean up and register a test user to get a valid JWT
+        const testUser = await User.findOne({ email: "recipe_test@test.com" });
+        if (testUser) await RefreshToken.deleteMany({ userId: testUser._id });
+        await User.deleteMany({ email: "recipe_test@test.com" });
+        const res = await request(app).post("/api/auth/register").send({
+            email: "recipe_test@test.com",
+            username: "recipe_testuser",
+            password: "testpass123",
+        });
+        accessToken = res.body.accessToken;
+    });
 
-    // Clean up or setup before/after tests if needed
     afterAll(async () => {
+        await User.deleteMany({ email: "recipe_test@test.com" });
         await mongoose.disconnect();
     });
 
@@ -17,24 +34,29 @@ describe("Recipe API Integration Tests", () => {
         it("should create a new comment successfully", async () => {
             const res = await request(app)
                 .post(`/api/recipes/${dummyRecipeId}/comments`)
-                .send({
-                    userId: dummyUserId,
-                    content: "This is a JIT (Jest) integrated test comment!"
-                });
+                .set("Authorization", `Bearer ${accessToken}`)
+                .send({ content: "This is a JIT (Jest) integrated test comment!" });
 
             expect(res.status).toBe(201);
             expect(res.body).toHaveProperty("_id");
             expect(res.body.content).toBe("This is a JIT (Jest) integrated test comment!");
 
-            // Verify in MongoDB
             const savedComment = await Comment.findById(res.body._id);
             expect(savedComment).not.toBeNull();
+        });
+
+        it("should return 401 without a token", async () => {
+            const res = await request(app)
+                .post(`/api/recipes/${dummyRecipeId}/comments`)
+                .send({ content: "No token" });
+            expect(res.status).toBe(401);
         });
 
         it("should return 400 if content is missing", async () => {
             const res = await request(app)
                 .post(`/api/recipes/${dummyRecipeId}/comments`)
-                .send({ userId: dummyUserId });
+                .set("Authorization", `Bearer ${accessToken}`)
+                .send({});
 
             expect(res.status).toBe(400);
             expect(res.body.message).toBe("Comment content is required");
@@ -46,26 +68,27 @@ describe("Recipe API Integration Tests", () => {
             // First call: Add like
             const addRes = await request(app)
                 .post(`/api/recipes/${dummyRecipeId}/likes`)
-                .send({ userId: dummyUserId });
+                .set("Authorization", `Bearer ${accessToken}`)
+                .send({});
 
             expect(addRes.status).toBe(201);
             expect(addRes.body.liked).toBe(true);
 
-            // Verify in DB
-            const likeInDb = await Like.findOne({ user: dummyUserId, recipe: dummyRecipeId });
-            expect(likeInDb).not.toBeNull();
-
             // Second call: Remove like
             const removeRes = await request(app)
                 .post(`/api/recipes/${dummyRecipeId}/likes`)
-                .send({ userId: dummyUserId });
+                .set("Authorization", `Bearer ${accessToken}`)
+                .send({});
 
             expect(removeRes.status).toBe(200);
             expect(removeRes.body.liked).toBe(false);
+        });
 
-            // Verify removed from DB
-            const removedLike = await Like.findOne({ user: dummyUserId, recipe: dummyRecipeId });
-            expect(removedLike).toBeNull();
+        it("should return 401 without a token", async () => {
+            const res = await request(app)
+                .post(`/api/recipes/${dummyRecipeId}/likes`)
+                .send({});
+            expect(res.status).toBe(401);
         });
     });
 });

@@ -53,7 +53,9 @@ export const exchangeGoogleCode = async (code: string): Promise<OAuthProfile> =>
     providerId: payload.sub,
     email: payload.email,
     username: payload.name || payload.email.split('@')[0],
-    profilePicture: payload.picture,
+    profilePicture: payload.picture
+      ? payload.picture.replace(/=s\d+-c$/, '=s400-c')
+      : undefined,
   };
 };
 
@@ -95,7 +97,7 @@ export const exchangeFacebookCode = async (code: string): Promise<OAuthProfile> 
     picture?: { data?: { url?: string } };
   }>('https://graph.facebook.com/me', {
     params: {
-      fields: 'id,email,name,picture',
+      fields: 'id,email,name,picture.type(large)',
       access_token: accessToken,
     },
   });

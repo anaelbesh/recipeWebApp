@@ -6,10 +6,10 @@ import path from "path";
 import { connectMongo } from "./db";
 import { initSocket } from "./sockets/socket";
 import { getChatHistory } from "./controllers/chatController";
-import { getAllUsers } from "./controllers/userController";
 import { verifyToken } from "./middleware/authMiddleware";
 import recipeRoutes from "./routes/recipeRoutes";
 import authRoutes from "./routes/authRoutes";
+import userRoutes from "./routes/userRoutes";
 import { setupSwagger } from "./config/swagger";
 
 export const app = express();
@@ -40,14 +40,17 @@ function prerequisites() {
     // Serve React app static files from client/dist at root
     const clientDistPath = path.join(__dirname, "..", "client", "dist");
     app.use(express.static(clientDistPath));
+
+    // Serve uploaded files (avatars, recipe images, etc.)
+    app.use("/uploads", express.static(path.resolve("data", "uploads")));
 }
 
 function initializeRoutes(app: express.Application) {
     app.get("/api/chat/history/:partnerId", verifyToken, getChatHistory);
-    app.get("/api/users", verifyToken, getAllUsers);
 
     app.use("/api/recipes", recipeRoutes);
     app.use("/api/auth", authRoutes);
+    app.use("/api/users", userRoutes);
 
     // serve index.html for all non-API routes (/login, /chat, /profile, etc.)
     app.use((req, res) => {

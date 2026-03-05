@@ -7,10 +7,23 @@ import { connectMongo } from "../src/db";
 import { userData } from "./utils";
 import * as oauthService from "../src/services/oauthService";
 
+const ALL_TEST_EMAILS = [
+  userData.email,
+  "oauthgoogle@test.com",
+  "mockgoogle@test.com",
+  "mockfacebook@test.com",
+  "mergetest@test.com",
+  "providercheck@test.com",
+];
+
 beforeAll(async () => {
   await connectMongo();
-  await User.deleteMany();
-  await RefreshToken.deleteMany();
+  const testUsers = await User.find({ email: { $in: ALL_TEST_EMAILS } });
+  const testIds = testUsers.map((u) => u._id);
+  if (testIds.length) await RefreshToken.deleteMany({ userId: { $in: testIds } });
+  await User.deleteMany({ email: { $in: ALL_TEST_EMAILS } });
+  // Also clean up any leftover doubletest users from previous runs
+  await User.deleteMany({ email: /^doubletest/ });
 });
 
 afterAll(async () => {
@@ -139,13 +152,16 @@ describe("Test Auth Suite", () => {
   });
 
   test("Logout without refresh token", async () => {
-    const response = await request(app).post("/api/auth/logout").send({});
+    const response = await request(app).post("/api/auth/logout")
+      .set("Authorization", `Bearer ${userData.accessToken}`)
+      .send({});
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Refresh token required');
   });
 
   test("Logout successfully", async () => {
     const response = await request(app).post("/api/auth/logout")
+      .set("Authorization", `Bearer ${userData.accessToken}`)
       .send({ refreshToken: userData.refreshToken });
     expect(response.status).toBe(200);
     expect(response.body.message).toBe('Logout successful');
