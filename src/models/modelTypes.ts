@@ -27,3 +27,13 @@ export interface IUser extends Document {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface IRecipe extends Document {
+  title: string;
+  instructions: string;
+  ingredients: string[];
+  imageUrl?: string;
+  createdBy: mongoose.Types.ObjectId;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

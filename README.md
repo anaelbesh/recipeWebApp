@@ -1,6 +1,6 @@
 # RecipeWebApp
 
-A full-stack recipe social platform. Users can register/login (local or OAuth), manage their profile and avatar, post and comment on recipes, like posts, and chat with other users in real time.
+A full-stack recipe social platform. Users can register/login (local or OAuth), manage their profile and avatar, **create/edit/delete recipes** (with full-text search and pagination), comment and like recipes, and chat with other users in real time.
 
 ---
 
@@ -29,10 +29,28 @@ recipeWebApp/
 ├── src/               # Express backend (TypeScript)
 │   ├── config/        # JWT, OAuth, Swagger config
 │   ├── controllers/   # Route handlers
+│   │   ├── recipeController.ts   # Recipe CRUD handlers
+│   │   ├── commentController.ts
+│   │   ├── likeController.ts
+│   │   ├── authController.ts
+│   │   ├── userController.ts
+│   │   └── common.ts             # AuthRequest interface
 │   ├── middleware/    # verifyToken, multer upload factory
 │   ├── models/        # Mongoose schemas
+│   │   ├── Recipe.ts             # Recipe model (text-indexed)
+│   │   ├── userModel.ts
+│   │   ├── Comment.ts
+│   │   ├── Like.ts
+│   │   ├── ChatMessage.ts
+│   │   ├── refreshTokenModel.ts
+│   │   └── modelTypes.ts         # Shared TS interfaces
 │   ├── routes/        # Express routers
-│   ├── services/      # OAuth token exchange logic
+│   │   ├── recipeRoutes.ts       # CRUD + comments + likes
+│   │   ├── authRoutes.ts
+│   │   └── userRoutes.ts
+│   ├── services/      # Business logic / DB layer
+│   │   ├── recipeService.ts      # listRecipes, createRecipe, etc.
+│   │   └── oauthService.ts
 │   └── sockets/       # Socket.io event handlers
 ├── client/            # React 18 + Vite frontend (TypeScript)
 │   └── src/
@@ -46,8 +64,10 @@ recipeWebApp/
 │       └── types/     # Shared TypeScript types
 ├── tests/             # Jest integration tests
 │   ├── auth.test.ts
+│   ├── fixtures/      # Auto-generated test assets (gitignored)
 │   └── WebServer/
-│       ├── recipe.test.ts
+│       ├── recipes.test.ts       # Recipe CRUD tests (19 tests)
+│       ├── recipe.test.ts        # Comments & likes tests
 │       └── user.test.ts
 └── data/
     └── uploads/       # Persisted user avatar images (gitignored)
@@ -82,6 +102,7 @@ recipeWebApp/
 |---|---|
 | `User` | username, email, password (hashed), provider (`local`/`google`/`facebook`), providerId, profilePicture |
 | `RefreshToken` | userId ref, token string, expiresAt |
+| `Recipe` | title, instructions, ingredients (array), imageUrl, createdBy (ref User), timestamps. Full-text index on title + instructions + ingredients, index on createdBy |
 | `Comment` | recipeId, userId, content, timestamps |
 | `Like` | recipeId, userId (unique pair) |
 | `ChatMessage` | senderId, receiverId, message, isRead |
@@ -233,12 +254,53 @@ All endpoints require `Authorization: Bearer <accessToken>`.
 
 ### Recipes — `/api/recipes`
 
-All endpoints require `Authorization: Bearer <accessToken>`.
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/` | — | List recipes. Supports `?search`, `?page`, `?limit`, `?sort`, `?mine=true` |
+| GET | `/:id` | — | Get a single recipe by MongoDB ObjectId |
+| POST | `/` | Bearer | Create a recipe (owner set from JWT) |
+| PUT | `/:id` | Bearer (owner only) | Update title / instructions / ingredients / imageUrl |
+| DELETE | `/:id` | Bearer (owner only) | Delete a recipe |
+| POST | `/:recipeId/comments` | Bearer | Add a comment to a recipe |
+| POST | `/:recipeId/likes` | Bearer | Toggle like on a recipe |
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/:recipeId/comments` | Add a comment to a recipe |
-| POST | `/:recipeId/likes` | Toggle like on a recipe |
+#### Query parameters for `GET /api/recipes`
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `search` | string | — | Full-text search across title, instructions, ingredients |
+| `page` | integer | `1` | Page number (1-based) |
+| `limit` | integer | `10` | Results per page (max `50`) |
+| `sort` | string | `-createdAt` | Sort field; prefix `-` for descending (e.g. `title`, `-createdAt`) |
+| `mine` | boolean | `false` | Return only the authenticated user's recipes (requires Bearer token) |
+
+#### Request body for `POST /api/recipes` and `PUT /api/recipes/:id`
+
+```json
+{
+  "title": "Classic Pancakes",
+  "instructions": "Mix flour, eggs and milk. Fry on medium heat until golden.",
+  "ingredients": ["flour", "eggs", "milk"],
+  "imageUrl": "https://example.com/pancakes.jpg"
+}
+```
+
+- `title` — required on create, 3–120 chars
+- `instructions` — required on create, 10–20 000 chars
+- `ingredients` — optional array of strings (empty strings are stripped)
+- `imageUrl` — optional, must start with `http://` or `https://`
+
+#### Response shape for `GET /api/recipes`
+
+```json
+{
+  "items": [ /* Recipe objects with populated createdBy */ ],
+  "page": 1,
+  "limit": 10,
+  "total": 42,
+  "pages": 5
+}
+```
 
 ### Chat — `/api/chat`
 
@@ -325,7 +387,8 @@ Tests run **sequentially** (`--runInBand`) to avoid database race conditions.
 | Suite | File | Coverage |
 |---|---|---|
 | Auth | `tests/auth.test.ts` | Register, login, refresh token, logout, double-use prevention, OAuth callbacks, account merge |
-| Recipe | `tests/WebServer/recipe.test.ts` | Comments (create, 401, 400), likes (toggle, 401) |
+| Recipes CRUD | `tests/WebServer/recipes.test.ts` | Create (201, 401, 400 validation), list + pagination, search, `mine=true`, get by id (400/404), update (200, 401, 403, 400), delete (200, 401, 403, 404) — **19 tests** |
+| Recipe (sub-resources) | `tests/WebServer/recipe.test.ts` | Comments (create, 401, 400), likes (toggle, 401) |
 | User | `tests/WebServer/user.test.ts` | `GET /me`, `GET /`, `GET /:id`, `PUT /me` (username + avatar), `PUT /:id`, `DELETE /:id` |
 
 ### Important test conventions
