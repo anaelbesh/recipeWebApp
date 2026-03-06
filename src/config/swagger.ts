@@ -136,6 +136,72 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           },
         },
       },
+      // ── Recipes ──────────────────────────────────────────
+      Recipe: {
+        type: "object",
+        properties: {
+          _id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
+          title: { type: "string", example: "Classic Pancakes" },
+          instructions: { type: "string", example: "Mix flour, eggs and milk. Fry on medium heat." },
+          ingredients: {
+            type: "array",
+            items: { type: "string" },
+            example: ["flour", "eggs", "milk"],
+          },
+          imageUrl: {
+            type: "string",
+            nullable: true,
+            example: "https://example.com/pancakes.jpg",
+          },
+          createdBy: {
+            type: "object",
+            properties: {
+              _id: { type: "string" },
+              username: { type: "string" },
+              profilePicture: { type: "string", nullable: true },
+            },
+          },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
+      RecipeCreateRequest: {
+        type: "object",
+        required: ["title", "instructions"],
+        properties: {
+          title: { type: "string", minLength: 3, maxLength: 120, example: "Classic Pancakes" },
+          instructions: { type: "string", minLength: 10, maxLength: 20000, example: "Mix flour, eggs and milk. Fry on medium heat until golden." },
+          ingredients: {
+            type: "array",
+            items: { type: "string" },
+            example: ["flour", "eggs", "milk"],
+          },
+          imageUrl: { type: "string", example: "https://example.com/pancakes.jpg" },
+        },
+      },
+      RecipeUpdateRequest: {
+        type: "object",
+        properties: {
+          title: { type: "string", minLength: 3, maxLength: 120, example: "Updated Pancakes" },
+          instructions: { type: "string", minLength: 10, maxLength: 20000, example: "Updated instructions here." },
+          ingredients: {
+            type: "array",
+            items: { type: "string" },
+            example: ["flour", "eggs", "milk", "butter"],
+          },
+          imageUrl: { type: "string", example: "https://example.com/new-image.jpg" },
+        },
+      },
+      RecipeListResponse: {
+        type: "object",
+        properties: {
+          items: { type: "array", items: { $ref: "#/components/schemas/Recipe" } },
+          page:  { type: "integer", example: 1 },
+          limit: { type: "integer", example: 10 },
+          total: { type: "integer", example: 42 },
+          pages: { type: "integer", example: 5 },
+        },
+      },
       // ── Recipes (Comments & Likes) ───────────────────────
       Comment: {
         type: "object",
@@ -499,6 +565,102 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
       },
     },
     // ═══════════════════  RECIPES  ════════════════════════
+    "/api/recipes": {
+      get: {
+        tags: ["Recipes"],
+        summary: "List recipes",
+        description: "Returns a paginated list of recipes. Supports full-text search via `search` param (matches title, instructions, ingredients). Pass `mine=true` with a Bearer token to get only your own recipes.",
+        security: [],
+        parameters: [
+          { name: "search", in: "query", required: false, schema: { type: "string" }, description: "Full-text search across title, instructions and ingredients" },
+          { name: "page",   in: "query", required: false, schema: { type: "integer", default: 1 }, description: "Page number (1-based)" },
+          { name: "limit",  in: "query", required: false, schema: { type: "integer", default: 10, maximum: 50 }, description: "Results per page (max 50)" },
+          { name: "sort",   in: "query", required: false, schema: { type: "string", default: "-createdAt" }, description: "Sort field, prefix with - for descending (e.g. -createdAt, title)" },
+          { name: "mine",   in: "query", required: false, schema: { type: "boolean" }, description: "If true, return only the authenticated user's recipes (requires Bearer token)" },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated recipe list",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/RecipeListResponse" } } },
+          },
+          "401": { description: "mine=true requires authentication", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "500": { description: "Internal server error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+      post: {
+        tags: ["Recipes"],
+        summary: "Create a recipe",
+        description: "Creates a new recipe owned by the authenticated user.",
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/RecipeCreateRequest" } } },
+        },
+        responses: {
+          "201": {
+            description: "Recipe created",
+            content: { "application/json": { schema: { type: "object", properties: { message: { type: "string" }, recipe: { $ref: "#/components/schemas/Recipe" } } } } },
+          },
+          "400": { description: "Validation error – missing or invalid fields", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "500": { description: "Internal server error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+    },
+    "/api/recipes/{id}": {
+      get: {
+        tags: ["Recipes"],
+        summary: "Get recipe by ID",
+        description: "Returns a single recipe with creator info populated.",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" }, description: "MongoDB ObjectId of the recipe" }],
+        responses: {
+          "200": {
+            description: "Recipe found",
+            content: { "application/json": { schema: { type: "object", properties: { recipe: { $ref: "#/components/schemas/Recipe" } } } } },
+          },
+          "400": { description: "Invalid ObjectId format", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "Recipe not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+      put: {
+        tags: ["Recipes"],
+        summary: "Update a recipe",
+        description: "Updates allowed fields (title, instructions, ingredients, imageUrl). Only the recipe owner can update.",
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" }, description: "MongoDB ObjectId of the recipe" }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/RecipeUpdateRequest" } } },
+        },
+        responses: {
+          "200": {
+            description: "Recipe updated",
+            content: { "application/json": { schema: { type: "object", properties: { message: { type: "string" }, recipe: { $ref: "#/components/schemas/Recipe" } } } } },
+          },
+          "400": { description: "Validation error or invalid ObjectId", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "403": { description: "Forbidden – not the recipe owner", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "Recipe not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+      delete: {
+        tags: ["Recipes"],
+        summary: "Delete a recipe",
+        description: "Permanently deletes a recipe. Only the recipe owner can delete.",
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" }, description: "MongoDB ObjectId of the recipe" }],
+        responses: {
+          "200": {
+            description: "Recipe deleted",
+            content: { "application/json": { schema: { type: "object", properties: { message: { type: "string" }, deletedId: { type: "string" } } } } },
+          },
+          "400": { description: "Invalid ObjectId", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "403": { description: "Forbidden – not the recipe owner", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "Recipe not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+    },
     "/api/recipes/{recipeId}/comments": {
       post: {
         tags: ["Recipes"],
