@@ -1,34 +1,46 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { postsApi, type Post } from '../api/posts';
+import { recipesApi } from '../api/recipes';
+import type { Recipe } from '../types/recipe';
 import { AvatarUploader } from '../components/profile/AvatarUploader';
-import { PostGrid } from '../components/profile/PostGrid';
+import { RecipeCard } from '../components/recipe/RecipeCard';
 import { EditProfileModal } from '../components/profile/EditProfileModal';
+import { Skeleton } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
 import styles from './ProfilePage.module.css';
+
+const LIMIT = 6;
 
 export function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [postsLoading, setPostsLoading] = useState(true);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipesLoading, setRecipesLoading] = useState(true);
+  const [recipesError, setRecipesError] = useState('');
   const [showEdit, setShowEdit] = useState(false);
+
+  const fetchMyRecipes = useCallback(async () => {
+    setRecipesLoading(true);
+    setRecipesError('');
+    try {
+      const result = await recipesApi.getMyRecipes({ limit: LIMIT });
+      setRecipes(result.items);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? 'Failed to load your recipes.';
+      setRecipesError(msg);
+    } finally {
+      setRecipesLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
-    let cancelled = false;
-    postsApi.getByUser(user.id).then((data) => {
-      if (!cancelled) {
-        setPosts(data);
-        setPostsLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+    fetchMyRecipes();
+  }, [user, fetchMyRecipes]);
 
   const handleLogout = async () => {
     await logout();
@@ -39,6 +51,7 @@ export function ProfilePage() {
 
   return (
     <div className={styles.page}>
+      {/* ── Profile header ── */}
       <header className={styles.header}>
         <AvatarUploader
           src={user.profilePicture || undefined}
@@ -54,18 +67,61 @@ export function ProfilePage() {
             <Button variant="secondary" onClick={() => setShowEdit(true)}>
               Edit Profile
             </Button>
-            <Button variant="secondary" onClick={() => navigate('/chat')}>
-              Go to Chat
-            </Button>
           </div>
         </div>
       </header>
 
-      <section className={styles.postsSection}>
-        <h2 className={styles.sectionTitle}>My Posts</h2>
-        <PostGrid posts={posts} loading={postsLoading} />
+      {/* ── My Recipes section ── */}
+      <section className={styles.recipesSection}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>My Recipes</h2>
+          <Link to="/recipes/new" className={styles.addLink}>
+            + Add Recipe
+          </Link>
+        </div>
+
+        {/* Loading */}
+        {recipesLoading && (
+          <div className={styles.grid}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} height={200} borderRadius={12} />
+            ))}
+          </div>
+        )}
+
+        {/* Error */}
+        {!recipesLoading && recipesError && (
+          <div className={styles.errorBox}>
+            <p className={styles.errorText}>{recipesError}</p>
+            <Button variant="secondary" onClick={fetchMyRecipes}>
+              Retry
+            </Button>
+          </div>
+        )}
+
+        {/* Empty */}
+        {!recipesLoading && !recipesError && recipes.length === 0 && (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyText}>
+              You haven&apos;t added any recipes yet.
+            </p>
+            <Button onClick={() => navigate('/recipes/new')}>
+              + Add your first recipe
+            </Button>
+          </div>
+        )}
+
+        {/* Recipe grid */}
+        {!recipesLoading && !recipesError && recipes.length > 0 && (
+          <div className={styles.grid}>
+            {recipes.map((recipe) => (
+              <RecipeCard key={recipe._id} recipe={recipe} />
+            ))}
+          </div>
+        )}
       </section>
 
+      {/* ── Logout ── */}
       <div className={styles.logoutRow}>
         <Button variant="danger" onClick={handleLogout}>
           Logout
@@ -76,3 +132,4 @@ export function ProfilePage() {
     </div>
   );
 }
+

@@ -1,0 +1,324 @@
+/* ── Shell ───────────────────────────────────────────────────────────────── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 1080px inner max-width keeps the bar from stretching on ultra-wide displays */
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Brand ───────────────────────────────────────────────────────────────── */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.brand:hover {
+  text-decoration: none;
+}
+
+.brandIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.brandText {
+  font-size: 1.05rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Desktop nav links ───────────────────────────────────────────────────── */
+.desktopLinks {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  flex: 1;
+}
+
+.link {
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4b5563;
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.link:hover {
+  color: #667eea;
+  background: #f0f1ff;
+  text-decoration: none;
+}
+
+.active {
+  color: #667eea !important;
+  background: #ede9fe;
+  font-weight: 600;
+}
+
+/* ── Desktop search ──────────────────────────────────────────────────────── */
+.desktopSearch {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 0 0 0 0.7rem;
+  overflow: hidden;
+  max-width: 240px;
+  flex: 0 1 240px;
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.88rem;
+  padding: 0.45rem 0;
+  width: 100%;
+  color: #111827;
+  font-family: inherit;
+}
+
+.searchInput::placeholder {
+  color: #9ca3af;
+}
+
+.searchBtn {
+  background: none;
+  border: none;
+  padding: 0 0.6rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #6b7280;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.searchBtn:hover {
+  color: #667eea;
+}
+
+/* ── Auth section (desktop) ──────────────────────────────────────────────── */
+.authSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+
+.profileLink {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #667eea;
+}
+
+.avatarInitial {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.navUsername {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #374151;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logoutBtn {
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #ef4444;
+  background: #fef2f2;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.logoutBtn:hover {
+  background: #fee2e2;
+}
+
+.loginBtn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff !important;
+  padding: 0.4rem 1rem;
+}
+
+.loginBtn:hover {
+  opacity: 0.9;
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  color: #fff !important;
+}
+
+/* ── Hamburger ───────────────────────────────────────────────────────────── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: #374151;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+  transform-origin: center;
+}
+
+/* X state */
+.barOpen1 {
+  transform: translateY(7px) rotate(45deg);
+}
+.barOpen2 {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.barOpen3 {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ── Mobile menu (drawer) ────────────────────────────────────────────────── */
+.mobileMenu {
+  display: none;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid #f3f4f6;
+  background: #fff;
+  /* slide in */
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.28s ease, opacity 0.22s ease, padding 0.22s ease;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.mobileMenuOpen {
+  max-height: 600px;
+  opacity: 1;
+  padding-top: 0.75rem;
+  padding-bottom: 1rem;
+}
+
+/* ── Mobile search ───────────────────────────────────────────────────────── */
+.mobileSearchForm {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.mobileSearchForm .searchInput {
+  flex: 1;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+}
+
+.mobileSearchBtn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.mobileLogoutBtn {
+  margin-top: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #ef4444;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+}
+
+/* ── Responsive breakpoint ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .desktopLinks,
+  .desktopSearch,
+  .authSection {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .mobileMenu {
+    display: flex;
+  }
+
+  .mobileMenu .link {
+    font-size: 0.95rem;
+    padding: 0.55rem 0.6rem;
+  }
+}

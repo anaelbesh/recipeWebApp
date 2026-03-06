@@ -10,20 +10,14 @@ import {
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { RecipesPage } from '../pages/RecipesPage';
+import { AddRecipePage } from '../pages/AddRecipePage';
+import { FavoritesPage } from '../pages/FavoritesPage';
+import { AppLayout } from '../layout/AppLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { tokenStorage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { ChatPage } from '../components/Chat';
-
-// TODO - implement feedPage
-function FeedPage() {
-  return (
-    <div style={{ padding: 40 }}>
-      <h1>Feed</h1>
-      <p style={{ color: '#6b7280' }}>Coming in Chunk 3</p>
-    </div>
-  );
-}
 
 /**
  * Handles the redirect from the backend OAuth flow.
@@ -66,34 +60,35 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* ── Auth pages (no navbar) ── */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/feed"
-          element={
-            <ProtectedRoute>
-              <FeedPage />
-            </ProtectedRoute>
-          }
-        />
         <Route path="/auth/callback" element={<OAuthCallback />} />
-        <Route
-          path="/chat"
-          element={
-            <ProtectedRoute>
-              <ChatPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+
+        {/* ── App shell (navbar + layout) ── */}
+        <Route element={<AppLayout />}>
+          <Route path="/recipes" element={<RecipesPage />} />
+          <Route path="/recipes/new" element={<AddRecipePage />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <ChatPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/recipes" replace />} />
+          <Route path="*" element={<Navigate to="/recipes" replace />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
