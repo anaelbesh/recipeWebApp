@@ -11,10 +11,12 @@ export function Button({
   isLoading,
   children,
   disabled,
+  type = 'button',
   ...props
 }: ButtonProps) {
   return (
     <button
+      type={type}
       className={`${styles.btn} ${styles[variant]}`}
       disabled={disabled || isLoading}
       {...props}

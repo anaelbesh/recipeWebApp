@@ -5,6 +5,8 @@ import type {
   CreateRecipePayload,
 } from '../types/recipe';
 
+export type UpdateRecipePayload = Partial<CreateRecipePayload>;
+
 export interface GetRecipesParams {
   page?: number;
   limit?: number;
@@ -62,5 +64,22 @@ export const recipesApi = {
       recipe: Recipe;
     }>('/recipes', payload);
     return data.recipe;
+  },
+
+  getRecipeById: async (id: string): Promise<Recipe> => {
+    const { data } = await apiClient.get<{ recipe: Recipe }>(`/recipes/${id}`);
+    return data.recipe;
+  },
+
+  updateRecipe: async (id: string, payload: UpdateRecipePayload): Promise<Recipe> => {
+    const { data } = await apiClient.put<{ message: string; recipe: Recipe }>(
+      `/recipes/${id}`,
+      payload,
+    );
+    return data.recipe;
+  },
+
+  deleteRecipe: async (id: string): Promise<void> => {
+    await apiClient.delete(`/recipes/${id}`);
   },
 };

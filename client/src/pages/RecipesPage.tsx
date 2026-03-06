@@ -156,7 +156,11 @@ export function RecipesPage() {
       {!loading && !error && recipes.length > 0 && (
         <div className={styles.grid}>
           {recipes.map((recipe) => (
-            <RecipeCard key={recipe._id} recipe={recipe} />
+            <RecipeCard
+              key={recipe._id}
+              recipe={recipe}
+              onDeleted={(id) => setRecipes((prev) => prev.filter((r) => r._id !== id))}
+            />
           ))}
         </div>
       )}
