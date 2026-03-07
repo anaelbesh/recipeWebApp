@@ -20,6 +20,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { tokenStorage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { ChatPage } from '../components/Chat';
+import { Spinner } from '../components/ui/Spinner';
 
 /**
  * Handles the redirect from the backend OAuth flow.
@@ -58,42 +59,62 @@ function OAuthCallback() {
   );
 }
 
+/**
+ * Renders the full route tree, but only after auth hydration is complete.
+ * This prevents any "flash of logged-out UI" while the /me request is in-flight.
+ */
+function RouteTree() {
+  const { isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spinner size={48} />
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      {/* ── Auth pages (no navbar) ── */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/auth/callback" element={<OAuthCallback />} />
+
+      {/* ── App shell (navbar + layout) ── */}
+      <Route element={<AppLayout />}>
+        <Route path="/recipes" element={<RecipesPage />} />
+        <Route path="/recipes/new" element={<AddRecipePage />} />
+        <Route path="/recipes/:id" element={<RecipeDetailsPage />} />
+        <Route path="/recipes/:id/edit" element={<EditRecipePage />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/recipes" replace />} />
+        <Route path="*" element={<Navigate to="/recipes" replace />} />
+      </Route>
+    </Routes>
+  );
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* ── Auth pages (no navbar) ── */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/auth/callback" element={<OAuthCallback />} />
-
-        {/* ── App shell (navbar + layout) ── */}
-        <Route element={<AppLayout />}>
-          <Route path="/recipes" element={<RecipesPage />} />
-          <Route path="/recipes/new" element={<AddRecipePage />} />
-          <Route path="/recipes/:id" element={<RecipeDetailsPage />} />
-          <Route path="/recipes/:id/edit" element={<EditRecipePage />} />
-          <Route path="/favorites" element={<FavoritesPage />} />
-          <Route
-            path="/chat"
-            element={
-              <ProtectedRoute>
-                <ChatPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/recipes" replace />} />
-          <Route path="*" element={<Navigate to="/recipes" replace />} />
-        </Route>
-      </Routes>
+      <RouteTree />
     </BrowserRouter>
   );
 }
