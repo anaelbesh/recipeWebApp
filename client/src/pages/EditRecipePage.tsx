@@ -16,7 +16,7 @@ function getOwnerId(createdBy: Recipe['createdBy']): string {
 export function EditRecipePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -27,12 +27,15 @@ export function EditRecipePage() {
   const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
-    if (!id) return;
+    // Wait for auth to finish before fetching, so ownership check has the real user
+    if (!id || authLoading) return;
+    setFetchLoading(true);
+    setFetchError('');
     recipesApi
       .getRecipeById(id)
       .then((r) => {
         // Front-end ownership check — backend enforces too
-        if (user && getOwnerId(r.createdBy) !== user.id) {
+        if (user && String(getOwnerId(r.createdBy)) !== String(user.id)) {
           setFetchError('You can only edit your own recipes.');
         } else {
           setRecipe(r);
@@ -44,7 +47,7 @@ export function EditRecipePage() {
         else setFetchError('Failed to load recipe.');
       })
       .finally(() => setFetchLoading(false));
-  }, [id, user]);
+  }, [id, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (values: RecipeFormValues) => {
     if (!id) return;
@@ -61,6 +64,7 @@ export function EditRecipePage() {
         instructions: values.instructions.trim(),
         ingredients: ingredientList.length ? ingredientList : [],
         imageUrl: values.imageUrl.trim() || undefined,
+        category: values.category,
       });
 
       setSuccessMsg('Recipe updated! Redirecting…');
@@ -81,7 +85,21 @@ export function EditRecipePage() {
     }
   };
 
-  // Not logged in
+  // Show skeleton while auth OR recipe is still loading
+  if (authLoading || fetchLoading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <Skeleton height={32} borderRadius={8} />
+          <Skeleton height={48} borderRadius={8} />
+          <Skeleton height={120} borderRadius={8} />
+          <Skeleton height={80} borderRadius={8} />
+        </div>
+      </div>
+    );
+  }
+
+  // Not logged in (only reached after auth has fully resolved)
   if (!user) {
     return (
       <div className={styles.page}>
@@ -93,19 +111,6 @@ export function EditRecipePage() {
           <Button variant="secondary" onClick={() => navigate('/recipes')}>
             ← Back to Recipes
           </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (fetchLoading) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.card}>
-          <Skeleton height={32} borderRadius={8} />
-          <Skeleton height={48} borderRadius={8} />
-          <Skeleton height={120} borderRadius={8} />
-          <Skeleton height={80} borderRadius={8} />
         </div>
       </div>
     );
@@ -129,6 +134,7 @@ export function EditRecipePage() {
     instructions: recipe.instructions,
     ingredients: recipe.ingredients.join(', '),
     imageUrl: recipe.imageUrl ?? '',
+    category: recipe.category || 'Other',
   };
 
   return (

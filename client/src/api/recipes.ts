@@ -12,6 +12,7 @@ export interface GetRecipesParams {
   limit?: number;
   search?: string;
   sort?: string;
+  category?: string;
 }
 
 export interface GetMyRecipesParams {
@@ -30,6 +31,7 @@ export const recipesApi = {
     if (params.limit !== undefined) cleanParams.limit = params.limit;
     if (params.search) cleanParams.search = params.search;
     if (params.sort) cleanParams.sort = params.sort;
+    if (params.category && params.category !== 'All') cleanParams.category = params.category;
 
     const { data } = await apiClient.get<RecipeListResponse>('/recipes', {
       params: cleanParams,

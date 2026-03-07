@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { FormError } from '../ui/FormError';
+import { RECIPE_CATEGORIES } from '../../constants/recipeCategories';
 import styles from './RecipeForm.module.css';
 
 export interface RecipeFormValues {
@@ -9,6 +10,7 @@ export interface RecipeFormValues {
   instructions: string;
   ingredients: string; // comma-separated string for the textarea
   imageUrl: string;
+  category: string;
 }
 
 interface RecipeFormProps {
@@ -44,6 +46,7 @@ export function RecipeForm({
   const [instructions, setInstructions] = useState(initialValues.instructions ?? '');
   const [ingredients, setIngredients] = useState(initialValues.ingredients ?? '');
   const [imageUrl, setImageUrl] = useState(initialValues.imageUrl ?? '');
+  const [category, setCategory] = useState(initialValues.category ?? RECIPE_CATEGORIES[0]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [imgBroken, setImgBroken] = useState(false);
@@ -57,6 +60,7 @@ export function RecipeForm({
       e.instructions = 'Instructions must be at least 10 characters';
     if (imageUrl.trim() && !isValidUrl(imageUrl.trim()))
       e.imageUrl = 'Must be a valid URL';
+    if (!category) e.category = 'Category is required';
     return e;
   };
 
@@ -68,7 +72,7 @@ export function RecipeForm({
       return;
     }
     setErrors({});
-    onSubmit({ title, instructions, ingredients, imageUrl });
+    onSubmit({ title, instructions, ingredients, imageUrl, category });
   };
 
   return (
@@ -84,6 +88,27 @@ export function RecipeForm({
         error={errors.title}
         placeholder="e.g. Spaghetti Carbonara"
       />
+
+      <div className={styles.fieldWrapper}>
+        <label htmlFor="category" className={styles.label}>
+          Category *
+        </label>
+        <select
+          id="category"
+          className={`${styles.select} ${errors.category ? styles.selectError : ''}`}
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          {RECIPE_CATEGORIES.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+        {errors.category && (
+          <span className={styles.fieldError}>{errors.category}</span>
+        )}
+      </div>
 
       <div className={styles.fieldWrapper}>
         <label htmlFor="instructions" className={styles.label}>

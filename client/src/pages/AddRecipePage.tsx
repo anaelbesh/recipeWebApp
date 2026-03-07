@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { recipesApi } from '../api/recipes';
+import { RECIPE_CATEGORIES } from '../constants/recipeCategories';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { FormError } from '../components/ui/FormError';
@@ -24,6 +25,7 @@ export function AddRecipePage() {
   const [instructions, setInstructions] = useState('');
   const [ingredients, setIngredients] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [category, setCategory] = useState<string>(RECIPE_CATEGORIES[0]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
@@ -43,6 +45,8 @@ export function AddRecipePage() {
 
     if (imageUrl.trim() && !isValidUrl(imageUrl.trim()))
       e.imageUrl = 'Must be a valid URL';
+
+    if (!category) e.category = 'Category is required';
 
     return e;
   };
@@ -69,6 +73,7 @@ export function AddRecipePage() {
         instructions: instructions.trim(),
         ingredients: ingredientList.length ? ingredientList : undefined,
         imageUrl: imageUrl.trim() || undefined,
+        category,
       });
 
       setSuccessMsg('Recipe created! Redirecting…');
@@ -126,6 +131,26 @@ export function AddRecipePage() {
             error={errors.title}
             placeholder="e.g. Spaghetti Carbonara"
           />
+
+          <div className={styles.fieldWrapper}>
+            <label htmlFor="category" className={styles.label}>
+              Category *
+            </label>
+            <select
+              id="category"
+              className={`${styles.textarea} ${errors.category ? styles.textareaError : ''}`}
+              style={{ resize: 'none', cursor: 'pointer' }}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              {RECIPE_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            {errors.category && (
+              <span className={styles.fieldError}>{errors.category}</span>
+            )}
+          </div>
 
           <div className={styles.fieldWrapper}>
             <label htmlFor="instructions" className={styles.label}>

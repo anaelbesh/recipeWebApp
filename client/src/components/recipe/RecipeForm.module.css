@@ -42,6 +42,30 @@
   border-color: #667eea;
 }
 
+.select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.925rem;
+  font-family: inherit;
+  color: #111827;
+  background: #fff;
+  transition: border-color 0.2s;
+  outline: none;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.select:focus {
+  border-color: #667eea;
+}
+
+.selectError {
+  border-color: #ef4444;
+}
+
 .textareaError {
   border-color: #ef4444;
 }

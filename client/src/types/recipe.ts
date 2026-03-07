@@ -4,6 +4,7 @@ export interface Recipe {
   instructions: string;
   ingredients: string[];
   imageUrl?: string;
+  category: string;
   createdBy:
     | { _id: string; username: string; profilePicture?: string }
     | string;
@@ -24,4 +25,5 @@ export interface CreateRecipePayload {
   instructions: string;
   ingredients?: string[];
   imageUrl?: string;
+  category: string;
 }

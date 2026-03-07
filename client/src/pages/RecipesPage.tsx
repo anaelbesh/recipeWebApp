@@ -7,6 +7,7 @@ import { Pagination } from '../components/Pagination';
 import { Skeleton } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
+import { RECIPE_CATEGORY_FILTER_OPTIONS } from '../constants/recipeCategories';
 import styles from './RecipesPage.module.css';
 
 const LIMIT = 9;
@@ -16,16 +17,22 @@ export function RecipesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // URL is the single source of truth for page + searchTerm
+  // URL is the single source of truth for page + searchTerm + category
   const page = Number(searchParams.get('page')) || 1;
   const searchTerm = searchParams.get('search') ?? '';
+  const category = searchParams.get('category') ?? 'All';
 
   // Local input state — syncs from URL when URL changes externally (e.g., navbar search)
   const [searchInput, setSearchInput] = useState(searchTerm);
+  const [categoryInput, setCategoryInput] = useState(category);
 
   useEffect(() => {
     setSearchInput(searchTerm);
   }, [searchTerm]);
+
+  useEffect(() => {
+    setCategoryInput(category);
+  }, [category]);
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [pages, setPages] = useState(1);
@@ -40,6 +47,7 @@ export function RecipesPage() {
         page,
         limit: LIMIT,
         search: searchTerm || undefined,
+        category: category !== 'All' ? category : undefined,
       });
       setRecipes(result.items);
       setPages(result.pages);
@@ -51,30 +59,31 @@ export function RecipesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm]);
+  }, [page, searchTerm, category]);
 
   useEffect(() => {
     fetchRecipes();
   }, [fetchRecipes]);
 
-  const updateParams = (newPage: number, newSearch: string) => {
+  const updateParams = (newPage: number, newSearch: string, newCategory: string) => {
     const params: Record<string, string> = { page: String(newPage) };
     if (newSearch) params.search = newSearch;
+    if (newCategory && newCategory !== 'All') params.category = newCategory;
     setSearchParams(params, { replace: true });
   };
 
   const handleSearchSubmit = (e: FormEvent) => {
     e.preventDefault();
-    updateParams(1, searchInput);
+    updateParams(1, searchInput, categoryInput);
   };
 
   const handleClearSearch = () => {
     setSearchInput('');
-    updateParams(1, '');
+    updateParams(1, '', categoryInput);
   };
 
   const handlePageChange = (newPage: number) => {
-    updateParams(newPage, searchTerm);
+    updateParams(newPage, searchTerm, category);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -102,11 +111,28 @@ export function RecipesPage() {
           placeholder="Search recipes…"
           aria-label="Search recipes"
         />
+        <select
+          className={styles.categorySelect}
+          value={categoryInput}
+          onChange={(e) => {
+            setCategoryInput(e.target.value);
+            updateParams(1, searchInput, e.target.value);
+          }}
+          aria-label="Filter by category"
+        >
+          {RECIPE_CATEGORY_FILTER_OPTIONS.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
         <Button type="submit" variant="secondary">
           Search
         </Button>
-        {searchTerm && (
-          <Button type="button" variant="secondary" onClick={handleClearSearch}>
+        {(searchTerm || category !== 'All') && (
+          <Button type="button" variant="secondary" onClick={() => {
+            setSearchInput('');
+            setCategoryInput('All');
+            updateParams(1, '', 'All');
+          }}>
             Clear
           </Button>
         )}
@@ -135,13 +161,17 @@ export function RecipesPage() {
       {!loading && !error && recipes.length === 0 && (
         <div className={styles.emptyState}>
           <p className={styles.emptyText}>
-            {searchTerm
-              ? `No recipes found for "${searchTerm}".`
+            {searchTerm || category !== 'All'
+              ? `No recipes found${category !== 'All' ? ` in "${category}"` : ''}${searchTerm ? ` for "${searchTerm}"` : ''}.`
               : 'No recipes yet. Be the first to add one!'}
           </p>
-          {searchTerm && (
-            <Button variant="secondary" onClick={handleClearSearch}>
-              Clear search
+          {(searchTerm || category !== 'All') && (
+            <Button variant="secondary" onClick={() => {
+              setSearchInput('');
+              setCategoryInput('All');
+              updateParams(1, '', 'All');
+            }}>
+              Clear filters
             </Button>
           )}
           {!searchTerm && user && (

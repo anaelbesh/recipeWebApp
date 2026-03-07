@@ -8,6 +8,7 @@ export interface RecipeListQuery {
   sort?: string;
   mine?: boolean;
   userId?: string;
+  category?: string;
 }
 
 export interface RecipeCreateInput {
@@ -15,6 +16,7 @@ export interface RecipeCreateInput {
   instructions: string;
   ingredients?: string[];
   imageUrl?: string;
+  category: string;
   createdBy: string;
 }
 
@@ -23,6 +25,7 @@ export interface RecipeUpdateInput {
   instructions?: string;
   ingredients?: string[];
   imageUrl?: string;
+  category?: string;
 }
 
 // ── List / search ──────────────────────────────────────────────────────────────
@@ -35,6 +38,11 @@ export const listRecipes = async (query: RecipeListQuery) => {
 
   if (query.mine && query.userId) {
     filter.createdBy = new mongoose.Types.ObjectId(query.userId);
+  }
+
+  // Category filter — skip if not provided or "All"
+  if (query.category && query.category !== 'All') {
+    filter.category = query.category;
   }
 
   let mongoSort: Record<string, unknown>;
@@ -94,6 +102,7 @@ export const updateRecipe = async (id: string, input: RecipeUpdateInput) => {
   if (input.title       !== undefined) recipe.title        = input.title;
   if (input.instructions !== undefined) recipe.instructions = input.instructions;
   if (input.imageUrl    !== undefined) recipe.imageUrl     = input.imageUrl;
+  if (input.category    !== undefined) recipe.category     = input.category;
   if (input.ingredients !== undefined) {
     recipe.ingredients = input.ingredients.map((s) => s.trim()).filter((s) => s.length > 0);
   }

@@ -53,6 +53,23 @@
   border-color: #667eea;
 }
 
+.categorySelect {
+  padding: 0.55rem 0.9rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #111827;
+  background: #fff;
+  transition: border-color 0.2s;
+  outline: none;
+  cursor: pointer;
+  min-width: 130px;
+}
+
+.categorySelect:focus {
+  border-color: #667eea;
+}
+
 /* ── Recipe grid ─────────────────────────────────── */
 .grid {
   display: grid;

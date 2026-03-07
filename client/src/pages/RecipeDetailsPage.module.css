@@ -94,6 +94,17 @@
   font-weight: 600;
 }
 
+.categoryBadge {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5b21b6;
+  background: #ede9fe;
+  border-radius: 20px;
+  padding: 0.2rem 0.75rem;
+  width: fit-content;
+}
+
 /* ── Sections ──────────────────────────────────── */
 .section {
   display: flex;

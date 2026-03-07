@@ -7,8 +7,7 @@ import {
   getRecipeById,
   createRecipe,
   updateRecipe,
-  deleteRecipe,
-} from "../controllers/recipeController";
+  deleteRecipe,  getCategories,} from "../controllers/recipeController";
 
 const router = Router();
 
@@ -16,7 +15,9 @@ const router = Router();
 // GET  /api/recipes        – public list; optionalVerifyToken populates req.user
 //                            when a token is present (needed for mine=true check in controller)
 router.get("/", optionalVerifyToken, getRecipes as any);
-
+// GET  /api/recipes/categories  – public static list of allowed categories
+// MUST be before /:id so it doesn't get caught as an id
+router.get('/categories', getCategories);
 // GET  /api/recipes/:id    – public single recipe
 router.get("/:id", getRecipeById as any);
 

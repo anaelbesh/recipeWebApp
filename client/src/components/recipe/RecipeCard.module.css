@@ -42,6 +42,17 @@
   line-height: 1.3;
 }
 
+.category {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #5b21b6;
+  background: #ede9fe;
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  width: fit-content;
+}
+
 .snippet {
   margin: 0;
   font-size: 0.85rem;

@@ -117,6 +117,9 @@ export function RecipeDetailsPage() {
 
           <div className={styles.details}>
             <h1 className={styles.title}>{recipe.title}</h1>
+            {recipe.category && (
+              <span className={styles.categoryBadge}>{recipe.category}</span>
+            )}
             {creatorName && (
               <p className={styles.creator}>by {creatorName}</p>
             )}

@@ -33,6 +33,7 @@ export interface IRecipe extends Document {
   instructions: string;
   ingredients: string[];
   imageUrl?: string;
+  category: string;
   createdBy: mongoose.Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;

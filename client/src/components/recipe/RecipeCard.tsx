@@ -77,6 +77,9 @@ export function RecipeCard({ recipe, onDeleted }: RecipeCardProps) {
         )}
         <div className={styles.body}>
           <h3 className={styles.title}>{recipe.title}</h3>
+          {recipe.category && (
+            <span className={styles.category}>{recipe.category}</span>
+          )}
           <p className={styles.snippet}>{snippet}</p>
           {recipe.ingredients.length > 0 && (
             <p className={styles.ingredients}>
