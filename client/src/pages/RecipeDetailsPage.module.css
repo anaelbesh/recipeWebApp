@@ -1,0 +1,208 @@
+.page {
+  min-height: 100vh;
+  background: #f9fafb;
+  padding: 2rem 1rem 4rem;
+}
+
+.container {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Back link ─────────────────────────────────── */
+.backLink {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #667eea;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  width: fit-content;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Main layout: image + details ──────────────── */
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .layout {
+    flex-direction: row;
+  }
+}
+
+/* ── Image ─────────────────────────────────────── */
+.imageWrapper {
+  width: 100%;
+  max-height: 320px;
+  overflow: hidden;
+  background: #f3f4f6;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .imageWrapper {
+    width: 320px;
+    max-height: unset;
+    min-height: 280px;
+  }
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Details ───────────────────────────────────── */
+.details {
+  padding: 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.creator {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.categoryBadge {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5b21b6;
+  background: #ede9fe;
+  border-radius: 20px;
+  padding: 0.2rem 0.75rem;
+  width: fit-content;
+}
+
+/* ── Sections ──────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.ingredientList {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ingredientItem {
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.instructions {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* ── Owner actions ─────────────────────────────── */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.deleteError {
+  margin: 0;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+/* ── Error/not found state ─────────────────────── */
+.errorText {
+  color: #dc2626;
+  font-size: 0.95rem;
+  margin: 0 0 1rem;
+}
+
+/* ── Confirmation overlay ──────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+}
+
+.dialog {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  padding: 2rem 1.75rem;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dialogBody {
+  margin: 0;
+  font-size: 0.925rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.dialogActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}

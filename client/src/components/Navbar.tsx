@@ -19,7 +19,7 @@ export function Navbar() {
     e.preventDefault();
     const q = searchQuery.trim();
     if (q) {
-      navigate(`${ROUTES.RECIPES}?search=${encodeURIComponent(q)}&page=1`);
+      navigate(`${ROUTES.RECIPES}?search=${encodeURIComponent(q)}`);
     } else {
       navigate(ROUTES.RECIPES);
     }

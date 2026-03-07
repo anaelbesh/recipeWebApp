@@ -3,11 +3,17 @@ import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/authMiddleware';
 import * as recipeService from '../services/recipeService';
 import { Recipe } from '../models/Recipe';
+import { RECIPE_CATEGORIES } from '../constants/recipeCategories';
+
+// ── GET /api/recipes/categories ───────────────────────────────────────────────
+export const getCategories = (_req: AuthRequest, res: Response) => {
+  res.status(200).json({ categories: RECIPE_CATEGORIES });
+};
 
 // ── GET /api/recipes ───────────────────────────────────────────────────────────
 export const getRecipes = async (req: AuthRequest, res: Response) => {
   try {
-    const { search, page, limit, sort, mine } = req.query as Record<string, string>;
+    const { search, page, limit, sort, mine, category } = req.query as Record<string, string>;
 
     // "mine=true" requires auth; the router conditionally applies verifyToken,
     // so we just trust req.user when present.
@@ -24,6 +30,7 @@ export const getRecipes = async (req: AuthRequest, res: Response) => {
       sort,
       mine:   mine === 'true',
       userId,
+      category: category || undefined,
     });
 
     return res.status(200).json(result);
@@ -56,10 +63,13 @@ export const getRecipeById = async (req: AuthRequest, res: Response) => {
 export const createRecipe = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { title, instructions, ingredients, imageUrl } = req.body;
+    const { title, instructions, ingredients, imageUrl, category } = req.body;
 
     if (!title || !instructions) {
       return res.status(400).json({ message: 'title and instructions are required' });
+    }
+    if (!category || !RECIPE_CATEGORIES.includes(category)) {
+      return res.status(400).json({ message: `category is required and must be one of: ${RECIPE_CATEGORIES.join(', ')}` });
     }
 
     const recipe = await recipeService.createRecipe({
@@ -67,6 +77,7 @@ export const createRecipe = async (req: AuthRequest, res: Response) => {
       instructions,
       ingredients: Array.isArray(ingredients) ? ingredients : undefined,
       imageUrl,
+      category,
       createdBy: userId,
     });
 
@@ -99,13 +110,14 @@ export const updateRecipe = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: 'Forbidden: you are not the owner of this recipe' });
     }
 
-    const { title, instructions, ingredients, imageUrl } = req.body;
+    const { title, instructions, ingredients, imageUrl, category } = req.body;
 
     const updated = await recipeService.updateRecipe(id, {
       title,
       instructions,
       ingredients: Array.isArray(ingredients) ? ingredients : undefined,
       imageUrl,
+      category: category && RECIPE_CATEGORIES.includes(category) ? category : undefined,
     });
 
     return res.status(200).json({ message: 'Recipe updated successfully', recipe: updated });

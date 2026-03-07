@@ -45,9 +45,18 @@ export const authApi = {
   me: async (): Promise<User | null> => {
     if (!tokenStorage.getAccess()) return null;
     try {
-      const { data } = await apiClient.get<{ user: User }>('/users/me');
-      return data.user;
+      const { data } = await apiClient.get<{ user: User & { _id?: string } }>('/users/me');
+      const raw = data.user;
+      // Mongoose serializes documents with both `_id` and the `id` virtual.
+      // Normalize defensively so user.id is always populated regardless of shape.
+      return {
+        ...raw,
+        id: raw.id ?? raw._id ?? '',
+      };
     } catch {
+      // 401 with no valid refresh token: the axios interceptor already cleared
+      // storage and will redirect to /login. Return null so hydration can finish.
+      tokenStorage.clear();
       return null;
     }
   },

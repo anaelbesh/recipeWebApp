@@ -5,11 +5,14 @@ import type {
   CreateRecipePayload,
 } from '../types/recipe';
 
+export type UpdateRecipePayload = Partial<CreateRecipePayload>;
+
 export interface GetRecipesParams {
   page?: number;
   limit?: number;
   search?: string;
   sort?: string;
+  category?: string;
 }
 
 export interface GetMyRecipesParams {
@@ -28,6 +31,7 @@ export const recipesApi = {
     if (params.limit !== undefined) cleanParams.limit = params.limit;
     if (params.search) cleanParams.search = params.search;
     if (params.sort) cleanParams.sort = params.sort;
+    if (params.category && params.category !== 'All') cleanParams.category = params.category;
 
     const { data } = await apiClient.get<RecipeListResponse>('/recipes', {
       params: cleanParams,
@@ -62,5 +66,22 @@ export const recipesApi = {
       recipe: Recipe;
     }>('/recipes', payload);
     return data.recipe;
+  },
+
+  getRecipeById: async (id: string): Promise<Recipe> => {
+    const { data } = await apiClient.get<{ recipe: Recipe }>(`/recipes/${id}`);
+    return data.recipe;
+  },
+
+  updateRecipe: async (id: string, payload: UpdateRecipePayload): Promise<Recipe> => {
+    const { data } = await apiClient.put<{ message: string; recipe: Recipe }>(
+      `/recipes/${id}`,
+      payload,
+    );
+    return data.recipe;
+  },
+
+  deleteRecipe: async (id: string): Promise<void> => {
+    await apiClient.delete(`/recipes/${id}`);
   },
 };

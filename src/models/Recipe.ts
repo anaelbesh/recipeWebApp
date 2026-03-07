@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { IRecipe } from './modelTypes';
+import { RECIPE_CATEGORIES } from '../constants/recipeCategories';
 
 const URL_REGEX = /^https?:\/\/.+/;
 
@@ -29,6 +30,13 @@ const recipeSchema = new Schema<IRecipe>(
         validator: (v: string) => !v || URL_REGEX.test(v),
         message: 'imageUrl must be a valid URL starting with http:// or https://',
       },
+    },
+    category: {
+      type: String,
+      enum: RECIPE_CATEGORIES,
+      default: 'Other',
+      trim: true,
+      index: true,
     },
     createdBy: {
       type: Schema.Types.ObjectId,
