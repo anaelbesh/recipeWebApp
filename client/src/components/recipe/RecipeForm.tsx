@@ -5,12 +5,19 @@ import { FormError } from '../ui/FormError';
 import { RECIPE_CATEGORIES } from '../../constants/recipeCategories';
 import styles from './RecipeForm.module.css';
 
+const KOSHER_TYPES = ['Meat', 'Dairy', 'Parve'] as const;
+const COOKING_METHODS = ['Grill', 'Oven', 'Pan', 'NoCook', 'Boil', 'Fry'] as const;
+const DISH_TYPES = ['Main', 'Side', 'Dessert', 'Snack', 'Spread'] as const;
+
 export interface RecipeFormValues {
   title: string;
   instructions: string;
   ingredients: string; // comma-separated string for the textarea
   imageUrl: string;
   category: string;
+  kosherType: string;
+  cookingMethod: string;
+  dishType: string;
 }
 
 interface RecipeFormProps {
@@ -47,6 +54,9 @@ export function RecipeForm({
   const [ingredients, setIngredients] = useState(initialValues.ingredients ?? '');
   const [imageUrl, setImageUrl] = useState(initialValues.imageUrl ?? '');
   const [category, setCategory] = useState(initialValues.category ?? RECIPE_CATEGORIES[0]);
+  const [kosherType, setKosherType] = useState(initialValues.kosherType ?? 'Parve');
+  const [cookingMethod, setCookingMethod] = useState(initialValues.cookingMethod ?? 'Pan');
+  const [dishType, setDishType] = useState(initialValues.dishType ?? 'Main');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [imgBroken, setImgBroken] = useState(false);
@@ -72,7 +82,7 @@ export function RecipeForm({
       return;
     }
     setErrors({});
-    onSubmit({ title, instructions, ingredients, imageUrl, category });
+    onSubmit({ title, instructions, ingredients, imageUrl, category, kosherType, cookingMethod, dishType });
   };
 
   return (
@@ -108,6 +118,48 @@ export function RecipeForm({
         {errors.category && (
           <span className={styles.fieldError}>{errors.category}</span>
         )}
+      </div>
+
+      <div className={styles.fieldWrapper}>
+        <label htmlFor="kosherType" className={styles.label}>Kosher Type *</label>
+        <select
+          id="kosherType"
+          className={styles.select}
+          value={kosherType}
+          onChange={(e) => setKosherType(e.target.value)}
+        >
+          {KOSHER_TYPES.map((k) => (
+            <option key={k} value={k}>{k}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.fieldWrapper}>
+        <label htmlFor="cookingMethod" className={styles.label}>Cooking Method *</label>
+        <select
+          id="cookingMethod"
+          className={styles.select}
+          value={cookingMethod}
+          onChange={(e) => setCookingMethod(e.target.value)}
+        >
+          {COOKING_METHODS.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.fieldWrapper}>
+        <label htmlFor="dishType" className={styles.label}>Dish Type</label>
+        <select
+          id="dishType"
+          className={styles.select}
+          value={dishType}
+          onChange={(e) => setDishType(e.target.value)}
+        >
+          {DISH_TYPES.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
       </div>
 
       <div className={styles.fieldWrapper}>

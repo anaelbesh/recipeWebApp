@@ -1,10 +1,12 @@
 .page {
-  max-width: 1100px;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 2rem 2rem 4rem;
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
+  box-sizing: border-box;
 }
 
 /* ── Header ──────────────────────────────────────── */
@@ -32,14 +34,14 @@
 .searchForm {
   display: flex;
   gap: 0.6rem;
-  align-items: center;
+  align-items: stretch;
   flex-wrap: wrap;
 }
 
 .searchInput {
-  flex: 1;
-  min-width: 200px;
-  padding: 0.55rem 0.9rem;
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 0.6rem 0.9rem;
   border: 1.5px solid #d1d5db;
   border-radius: 8px;
   font-size: 0.95rem;
@@ -47,6 +49,7 @@
   background: #fff;
   transition: border-color 0.2s;
   outline: none;
+  box-sizing: border-box;
 }
 
 .searchInput:focus {
@@ -54,7 +57,8 @@
 }
 
 .categorySelect {
-  padding: 0.55rem 0.9rem;
+  flex: 0 0 auto;
+  padding: 0.6rem 0.9rem;
   border: 1.5px solid #d1d5db;
   border-radius: 8px;
   font-size: 0.95rem;
@@ -63,7 +67,8 @@
   transition: border-color 0.2s;
   outline: none;
   cursor: pointer;
-  min-width: 130px;
+  min-width: 140px;
+  box-sizing: border-box;
 }
 
 .categorySelect:focus {
@@ -74,7 +79,28 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
+  gap: 1.5rem;
+}
+
+/* 4 columns on very wide screens */
+@media (min-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 3 columns on desktop / large tablet */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 2 columns on tablet */
+@media (min-width: 580px) and (max-width: 899px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* ── Error box ───────────────────────────────────── */
@@ -111,18 +137,38 @@
   color: #6b7280;
 }
 
-/* ── Responsive ──────────────────────────────────── */
-@media (max-width: 640px) {
+/* ── Mobile ──────────────────────────────────────── */
+@media (max-width: 579px) {
   .page {
-    padding: 1.25rem 1rem 3rem;
+    padding: 1.25rem 0.9rem 3rem;
+    gap: 1.25rem;
   }
 
   .title {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+  }
+
+  /* Stack search form vertically — each control fills full width */
+  .searchForm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchInput,
+  .categorySelect {
+    width: 100%;
+    flex: 1 1 auto;
+    font-size: 1rem;
+  }
+
+  /* Buttons fill remaining width on mobile */
+  .searchForm > * {
+    width: 100%;
   }
 
   .grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 
@@ -169,4 +215,11 @@
 
 .sentinel {
   height: 1px;
+}
+
+/* ── AI search note ──────────────────────────────── */
+.aiPoweredNote {
+  margin: -0.75rem 0 0;
+  font-size: 0.8rem;
+  color: #6b7280;
 }

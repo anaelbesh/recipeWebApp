@@ -16,7 +16,7 @@ export function RecipesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // URL is source of truth for search + category (page is now internal)
+  // URL is source of truth for normal search + category (page is now internal)
   const searchTerm = searchParams.get('search') ?? '';
   const category = searchParams.get('category') ?? 'All';
 
@@ -32,34 +32,40 @@ export function RecipesPage() {
     setCategoryInput(category);
   }, [category]);
 
-  // Infinite scroll state
+  // ── Normal-search state (infinite scroll) ──────────────────────────────────
   const [items, setItems] = useState<Recipe[]>([]);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingInitial, setLoadingInitial] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
 
-  // Refs to avoid stale closures in IntersectionObserver
-  const loadingMoreRef = useRef(false);
-  const hasMoreRef = useRef(true);
-  const pageRef = useRef(1);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // Refs — avoid stale closures in IntersectionObserver and async callbacks
+  const loadingMoreRef    = useRef(false);
+  const hasMoreRef        = useRef(true);
+  // Cursor for cursor-based pagination (non-search). null = first page.
+  const cursorRef         = useRef<string | null>(null);
+  // Page number for legacy skip-based pagination (text-search results).
+  const pageRef           = useRef(1);
+  // True while fetchInitial is in flight — prevents loadMore from running concurrently.
+  const fetchingInitialRef = useRef(false);
+  const sentinelRef       = useRef<HTMLDivElement | null>(null);
 
   const extractError = (err: unknown) =>
     (err as { response?: { data?: { message?: string } } })?.response?.data
       ?.message ?? 'Failed to load recipes.';
 
-  // Initial fetch (page 1) — runs when search/category filters change
+  // ── Normal search: initial fetch (first page) ──────────────────────────────
   const fetchInitial = useCallback(async () => {
+    fetchingInitialRef.current = true;
     setLoadingInitial(true);
     setError(null);
     setLoadMoreError(null);
     setItems([]);
-    setPage(1);
     setHasMore(true);
-    pageRef.current = 1;
+    // Reset both pagination cursors
+    cursorRef.current  = null;
+    pageRef.current    = 1;
     hasMoreRef.current = true;
     loadingMoreRef.current = false;
 
@@ -70,15 +76,18 @@ export function RecipesPage() {
         search: searchTerm || undefined,
         category: category !== 'All' ? category : undefined,
       });
+
       setItems(result.items);
-      const more = result.items.length === LIMIT && result.page < result.pages;
-      setHasMore(more);
-      hasMoreRef.current = more;
-      pageRef.current = 1;
+      setHasMore(result.hasMore);
+      hasMoreRef.current = result.hasMore;
+      // Save cursor for non-search infinite scroll
+      cursorRef.current = result.nextCursor ?? null;
+      pageRef.current   = 1;
     } catch (err: unknown) {
       setError(extractError(err));
     } finally {
       setLoadingInitial(false);
+      fetchingInitialRef.current = false;
     }
   }, [searchTerm, category]);
 
@@ -86,32 +95,44 @@ export function RecipesPage() {
     fetchInitial();
   }, [fetchInitial]);
 
-  // Load next page and append
+  // ── Normal search: load next page and append ────────────────────────────────
   const loadMore = useCallback(async () => {
-    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    // Guard: skip if already loading, nothing more to load, or initial fetch is in flight.
+    if (loadingMoreRef.current || !hasMoreRef.current || fetchingInitialRef.current) return;
 
     loadingMoreRef.current = true;
     setLoadingMore(true);
     setLoadMoreError(null);
 
-    const nextPage = pageRef.current + 1;
     try {
-      const result = await recipesApi.getRecipes({
-        page: nextPage,
-        limit: LIMIT,
-        search: searchTerm || undefined,
-        category: category !== 'All' ? category : undefined,
-      });
+      let result;
+      if (searchTerm) {
+        // Text-search results: use legacy page-based pagination (cursor not supported).
+        const nextPage = pageRef.current + 1;
+        result = await recipesApi.getRecipes({
+          page: nextPage,
+          limit: LIMIT,
+          search: searchTerm,
+          category: category !== 'All' ? category : undefined,
+        });
+        pageRef.current = nextPage;
+      } else {
+        // Normal results: cursor-based — no skip drift, no missing items.
+        result = await recipesApi.getRecipes({
+          cursor: cursorRef.current ?? undefined,
+          limit: LIMIT,
+          category: category !== 'All' ? category : undefined,
+        });
+        cursorRef.current = result.nextCursor ?? null;
+      }
+
       setItems((prev) => {
         const existingIds = new Set(prev.map((r) => r._id));
         const fresh = result.items.filter((r) => !existingIds.has(r._id));
         return [...prev, ...fresh];
       });
-      const more = result.items.length === LIMIT && result.page < result.pages;
-      setHasMore(more);
-      hasMoreRef.current = more;
-      setPage(nextPage);
-      pageRef.current = nextPage;
+      setHasMore(result.hasMore);
+      hasMoreRef.current = result.hasMore;
     } catch (err: unknown) {
       setLoadMoreError(extractError(err));
     } finally {
@@ -120,8 +141,12 @@ export function RecipesPage() {
     }
   }, [searchTerm, category]);
 
-  // IntersectionObserver: trigger loadMore when sentinel is visible
+  // IntersectionObserver: trigger loadMore when sentinel is visible.
+  // IMPORTANT: `loadingInitial` is in the dep array so the observer re-attaches
+  // to the freshly-mounted sentinel after each initial fetch (the sentinel is
+  // conditionally rendered, so its DOM node is replaced on every show/hide cycle).
   useEffect(() => {
+    if (loadingInitial) return; // sentinel is not in DOM during initial load
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
@@ -136,7 +161,7 @@ export function RecipesPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [loadMore, loadingInitial]);
 
   const updateParams = (newSearch: string, newCategory: string) => {
     const params: Record<string, string> = {};
@@ -161,49 +186,48 @@ export function RecipesPage() {
       {/* ── Header ── */}
       <div className={styles.header}>
         <h1 className={styles.title}>Recipes</h1>
-        {user && (
-          <div className={styles.headerActions}>
+        <div className={styles.headerActions}>
+          {user && (
             <Button onClick={() => navigate('/recipes/new')}>
               + Add Recipe
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* ── Search ── */}
+      {/* ── Search form ── */}
       <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
-        <input
-          type="text"
-          className={styles.searchInput}
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search recipes…"
-          aria-label="Search recipes"
-        />
-        <select
-          className={styles.categorySelect}
-          value={categoryInput}
-          onChange={(e) => {
-            setCategoryInput(e.target.value);
-            updateParams(searchInput, e.target.value);
-          }}
-          aria-label="Filter by category"
-        >
-          {RECIPE_CATEGORY_FILTER_OPTIONS.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-        <Button type="submit" variant="secondary">
-          Search
-        </Button>
-        {(searchTerm || category !== 'All') && (
-          <Button type="button" variant="secondary" onClick={handleClearFilters}>
-            Clear
+          <input
+            type="text"
+            className={styles.searchInput}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search recipes…"
+            aria-label="Search recipes"
+          />
+          <select
+            className={styles.categorySelect}
+            value={categoryInput}
+            onChange={(e) => {
+              setCategoryInput(e.target.value);
+              updateParams(searchInput, e.target.value);
+            }}
+            aria-label="Filter by category"
+          >
+            {RECIPE_CATEGORY_FILTER_OPTIONS.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+          <Button type="submit" variant="secondary">
+            Search
           </Button>
-        )}
-      </form>
+          {(searchTerm || category !== 'All') && (
+            <Button type="button" variant="secondary" onClick={handleClearFilters}>
+              Clear
+            </Button>
+          )}
+        </form>
 
-      {/* ── Initial error state ── */}
       {error && (
         <div className={styles.errorBox}>
           <p className={styles.errorText}>{error}</p>
@@ -213,7 +237,6 @@ export function RecipesPage() {
         </div>
       )}
 
-      {/* ── Initial loading skeletons ── */}
       {loadingInitial && (
         <div className={styles.grid}>
           {Array.from({ length: LIMIT }).map((_, i) => (
@@ -222,7 +245,6 @@ export function RecipesPage() {
         </div>
       )}
 
-      {/* ── Empty state (first fetch returned 0) ── */}
       {!loadingInitial && !error && items.length === 0 && (
         <div className={styles.emptyState}>
           <p className={styles.emptyText}>
@@ -243,7 +265,6 @@ export function RecipesPage() {
         </div>
       )}
 
-      {/* ── Recipe grid ── */}
       {!loadingInitial && items.length > 0 && (
         <div className={styles.grid}>
           {items.map((recipe) => (
@@ -256,7 +277,6 @@ export function RecipesPage() {
         </div>
       )}
 
-      {/* ── Bottom states: spinner / load-more error / end message ── */}
       {!loadingInitial && !error && (
         <>
           {loadingMore && (

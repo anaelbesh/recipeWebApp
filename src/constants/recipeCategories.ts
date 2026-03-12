@@ -2,10 +2,12 @@ export const RECIPE_CATEGORIES = [
   'Pizza',
   'Pasta',
   'Burger',
-  'Spreads',
+  'Fish',
   'Salad',
-  'Dessert',
-  'Vegan',
+  'Chicken',
+  'Meat',
+  'Grill',
+  'Spreads',
   'Other',
 ] as const;
 

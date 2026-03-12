@@ -8,6 +8,10 @@ import { Button } from '../components/ui/Button';
 import { FormError } from '../components/ui/FormError';
 import styles from './AddRecipePage.module.css';
 
+const KOSHER_TYPES = ['Meat', 'Dairy', 'Parve'] as const;
+const COOKING_METHODS = ['Grill', 'Oven', 'Pan', 'NoCook', 'Boil', 'Fry'] as const;
+const DISH_TYPES = ['Main', 'Side', 'Dessert', 'Snack', 'Spread'] as const;
+
 function isValidUrl(value: string): boolean {
   try {
     new URL(value);
@@ -26,6 +30,9 @@ export function AddRecipePage() {
   const [ingredients, setIngredients] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [category, setCategory] = useState<string>(RECIPE_CATEGORIES[0]);
+  const [kosherType, setKosherType] = useState('Parve');
+  const [cookingMethod, setCookingMethod] = useState('Pan');
+  const [dishType, setDishType] = useState('Main');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
@@ -74,6 +81,9 @@ export function AddRecipePage() {
         ingredients: ingredientList.length ? ingredientList : undefined,
         imageUrl: imageUrl.trim() || undefined,
         category,
+        kosherType,
+        cookingMethod,
+        dishType,
       });
 
       setSuccessMsg('Recipe created! Redirecting…');
@@ -150,6 +160,45 @@ export function AddRecipePage() {
             {errors.category && (
               <span className={styles.fieldError}>{errors.category}</span>
             )}
+          </div>
+
+          <div className={styles.fieldWrapper}>
+            <label htmlFor="kosherType" className={styles.label}>Kosher Type *</label>
+            <select
+              id="kosherType"
+              className={styles.textarea}
+              style={{ resize: 'none', cursor: 'pointer' }}
+              value={kosherType}
+              onChange={(e) => setKosherType(e.target.value)}
+            >
+              {KOSHER_TYPES.map((k) => <option key={k} value={k}>{k}</option>)}
+            </select>
+          </div>
+
+          <div className={styles.fieldWrapper}>
+            <label htmlFor="cookingMethod" className={styles.label}>Cooking Method *</label>
+            <select
+              id="cookingMethod"
+              className={styles.textarea}
+              style={{ resize: 'none', cursor: 'pointer' }}
+              value={cookingMethod}
+              onChange={(e) => setCookingMethod(e.target.value)}
+            >
+              {COOKING_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+
+          <div className={styles.fieldWrapper}>
+            <label htmlFor="dishType" className={styles.label}>Dish Type</label>
+            <select
+              id="dishType"
+              className={styles.textarea}
+              style={{ resize: 'none', cursor: 'pointer' }}
+              value={dishType}
+              onChange={(e) => setDishType(e.target.value)}
+            >
+              {DISH_TYPES.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
           </div>
 
           <div className={styles.fieldWrapper}>

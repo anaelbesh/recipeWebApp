@@ -7,7 +7,10 @@ import {
   getRecipeById,
   createRecipe,
   updateRecipe,
-  deleteRecipe,  getCategories,} from "../controllers/recipeController";
+  deleteRecipe,
+  getCategories,
+  aiSearchRecipes,
+} from "../controllers/recipeController";
 
 const router = Router();
 
@@ -18,6 +21,9 @@ router.get("/", optionalVerifyToken, getRecipes as any);
 // GET  /api/recipes/categories  – public static list of allowed categories
 // MUST be before /:id so it doesn't get caught as an id
 router.get('/categories', getCategories);
+// GET  /api/recipes/ai-search   – semantic search via Gemini embeddings
+// MUST be before /:id so it doesn't get caught as an id
+router.get('/ai-search', aiSearchRecipes as any);
 // GET  /api/recipes/:id    – public single recipe
 router.get("/:id", getRecipeById as any);
 

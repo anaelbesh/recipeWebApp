@@ -2,12 +2,16 @@ import apiClient from './client';
 import type {
   Recipe,
   RecipeListResponse,
+  AiSearchResponse,
   CreateRecipePayload,
 } from '../types/recipe';
 
 export type UpdateRecipePayload = Partial<CreateRecipePayload>;
 
 export interface GetRecipesParams {
+  /** Cursor for cursor-based pagination (replaces page for infinite scroll). */
+  cursor?: string;
+  /** Legacy page number — used for search results. */
   page?: number;
   limit?: number;
   search?: string;
@@ -27,10 +31,11 @@ export const recipesApi = {
   ): Promise<RecipeListResponse> => {
     // omit empty search so the backend doesn't run a $text query on an empty string
     const cleanParams: Record<string, string | number> = {};
-    if (params.page !== undefined) cleanParams.page = params.page;
-    if (params.limit !== undefined) cleanParams.limit = params.limit;
-    if (params.search) cleanParams.search = params.search;
-    if (params.sort) cleanParams.sort = params.sort;
+    if (params.cursor)                        cleanParams.cursor = params.cursor;
+    else if (params.page !== undefined)       cleanParams.page   = params.page;
+    if (params.limit !== undefined)           cleanParams.limit  = params.limit;
+    if (params.search)                        cleanParams.search = params.search;
+    if (params.sort)                          cleanParams.sort   = params.sort;
     if (params.category && params.category !== 'All') cleanParams.category = params.category;
 
     const { data } = await apiClient.get<RecipeListResponse>('/recipes', {
@@ -83,5 +88,19 @@ export const recipesApi = {
 
   deleteRecipe: async (id: string): Promise<void> => {
     await apiClient.delete(`/recipes/${id}`);
+  },
+
+  aiSearchRecipes: async (params: {
+    q: string;
+    category?: string;
+    limit?: number;
+  }): Promise<AiSearchResponse> => {
+    const cleanParams: Record<string, string | number> = { q: params.q };
+    if (params.category && params.category !== 'All') cleanParams.category = params.category;
+    if (params.limit) cleanParams.limit = params.limit;
+    const { data } = await apiClient.get<AiSearchResponse>('/recipes/ai-search', {
+      params: cleanParams,
+    });
+    return data;
   },
 };

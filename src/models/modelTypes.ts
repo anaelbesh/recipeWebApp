@@ -34,7 +34,12 @@ export interface IRecipe extends Document {
   ingredients: string[];
   imageUrl?: string;
   category: string;
+  kosherType: 'Meat' | 'Dairy' | 'Parve';
+  cookingMethod: 'Grill' | 'Oven' | 'Pan' | 'NoCook' | 'Boil' | 'Fry';
+  dishType: 'Main' | 'Side' | 'Dessert' | 'Snack' | 'Spread';
   createdBy: mongoose.Types.ObjectId;
+  searchText: string;
+  embedding: number[];
   createdAt?: Date;
   updatedAt?: Date;
 }
