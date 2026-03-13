@@ -10,6 +10,16 @@ import { RECIPE_CATEGORY_FILTER_OPTIONS } from '../constants/recipeCategories';
 import styles from './RecipesPage.module.css';
 
 const LIMIT = 10;
+const RECIPES_SCROLL_STATE_KEY = 'recipesScrollRestore';
+
+interface ScrollRestoreState {
+  y: number;
+  cursor: string | null;
+  page: number;
+  category: string;
+  query: string;
+  ts: number;
+}
 
 export function RecipesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -43,6 +53,8 @@ export function RecipesPage() {
   // Refs — avoid stale closures in IntersectionObserver and async callbacks
   const loadingMoreRef    = useRef(false);
   const hasMoreRef        = useRef(true);
+  const restoreStateRef = useRef<ScrollRestoreState | null>(null);
+  const restoredRef = useRef(false);
   // Cursor for cursor-based pagination (non-search). null = first page.
   const cursorRef         = useRef<string | null>(null);
   // Page number for legacy skip-based pagination (text-search results).
@@ -95,6 +107,23 @@ export function RecipesPage() {
     fetchInitial();
   }, [fetchInitial]);
 
+  useEffect(() => {
+    const saved = sessionStorage.getItem(RECIPES_SCROLL_STATE_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved) as ScrollRestoreState;
+      const isFresh = Date.now() - parsed.ts < 5 * 60 * 1000;
+      if (isFresh && parsed.category === category && parsed.query === searchTerm) {
+        restoreStateRef.current = parsed;
+        restoredRef.current = false;
+      } else {
+        sessionStorage.removeItem(RECIPES_SCROLL_STATE_KEY);
+      }
+    } catch {
+      sessionStorage.removeItem(RECIPES_SCROLL_STATE_KEY);
+    }
+  }, [category, searchTerm]);
+
   // ── Normal search: load next page and append ────────────────────────────────
   const loadMore = useCallback(async () => {
     // Guard: skip if already loading, nothing more to load, or initial fetch is in flight.
@@ -141,6 +170,26 @@ export function RecipesPage() {
     }
   }, [searchTerm, category]);
 
+  const maybeRestoreScroll = useCallback(async () => {
+    const restore = restoreStateRef.current;
+    if (!restore || restoredRef.current || loadingInitial) return;
+    const targetHeight = restore.y + window.innerHeight;
+    if (document.body.scrollHeight >= targetHeight || !hasMoreRef.current) {
+      requestAnimationFrame(() => window.scrollTo(0, restore.y));
+      restoredRef.current = true;
+      restoreStateRef.current = null;
+      sessionStorage.removeItem(RECIPES_SCROLL_STATE_KEY);
+      return;
+    }
+    if (hasMoreRef.current && !loadingMoreRef.current) {
+      await loadMore();
+    }
+  }, [loadMore, loadingInitial]);
+
+  useEffect(() => {
+    void maybeRestoreScroll();
+  }, [items.length, maybeRestoreScroll]);
+
   // IntersectionObserver: trigger loadMore when sentinel is visible.
   // IMPORTANT: `loadingInitial` is in the dep array so the observer re-attaches
   // to the freshly-mounted sentinel after each initial fetch (the sentinel is
@@ -162,6 +211,19 @@ export function RecipesPage() {
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [loadMore, loadingInitial]);
+
+  const handleRecipeSelect = (recipeId: string) => {
+    const payload: ScrollRestoreState = {
+      y: window.scrollY,
+      cursor: cursorRef.current,
+      page: pageRef.current,
+      category,
+      query: searchTerm,
+      ts: Date.now(),
+    };
+    sessionStorage.setItem(RECIPES_SCROLL_STATE_KEY, JSON.stringify(payload));
+    navigate(`/recipes/${recipeId}`, { state: { from: 'recipes' } });
+  };
 
   const updateParams = (newSearch: string, newCategory: string) => {
     const params: Record<string, string> = {};
@@ -272,6 +334,7 @@ export function RecipesPage() {
               key={recipe._id}
               recipe={recipe}
               onDeleted={(id) => setItems((prev) => prev.filter((r) => r._id !== id))}
+              onSelect={handleRecipeSelect}
             />
           ))}
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { recipesApi } from '../api/recipes';
 import type { Recipe } from '../types/recipe';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +21,7 @@ function checkOwner(userId: string | undefined, createdBy: Recipe['createdBy']):
 export function RecipeDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -107,13 +108,22 @@ export function RecipeDetailsPage() {
   const creatorName =
     typeof recipe.createdBy === 'object' ? recipe.createdBy.username : '';
 
+  const handleBackClick = () => {
+    const cameFromRecipes = location.state?.from === 'recipes';
+    if (cameFromRecipes) {
+      navigate(-1);
+    } else {
+      navigate('/recipes');
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
         {/* Back button */}
         <button 
           className={styles.backLink} 
-          onClick={() => navigate('/recipes')}
+          onClick={handleBackClick}
           aria-label="Go back to recipes list"
         >
           ← Back to Recipes

@@ -9,6 +9,8 @@ interface RecipeCardProps {
   recipe: Recipe;
   /** Called after a successful delete so the parent can remove the card */
   onDeleted?: (id: string) => void;
+  /** Optional handler when the card is activated */
+  onSelect?: (id: string) => void;
 }
 
 function checkOwner(userId: string | undefined, createdBy: Recipe['createdBy']): boolean {
@@ -18,7 +20,7 @@ function checkOwner(userId: string | undefined, createdBy: Recipe['createdBy']):
   return String(ownerId) === String(userId);
 }
 
-export function RecipeCard({ recipe, onDeleted }: RecipeCardProps) {
+export function RecipeCard({ recipe, onDeleted, onSelect }: RecipeCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isOwner = checkOwner(user?.id, recipe.createdBy);
@@ -52,14 +54,22 @@ export function RecipeCard({ recipe, onDeleted }: RecipeCardProps) {
     }
   };
 
+  const handleCardClick = () => {
+    if (onSelect) {
+      onSelect(recipe._id);
+      return;
+    }
+    navigate(`/recipes/${recipe._id}`, { state: { from: 'recipes' } });
+  };
+
   return (
     <>
       <div
         className={styles.card}
         role="button"
         tabIndex={0}
-        onClick={() => navigate(`/recipes/${recipe._id}`)}
-        onKeyDown={(e) => e.key === 'Enter' && navigate(`/recipes/${recipe._id}`)}
+        onClick={handleCardClick}
+        onKeyDown={(e) => e.key === 'Enter' && handleCardClick()}
         style={{ cursor: 'pointer' }}
       >
         {recipe.imageUrl && (
@@ -77,9 +87,7 @@ export function RecipeCard({ recipe, onDeleted }: RecipeCardProps) {
         )}
         <div className={styles.body}>
           <h3 className={styles.title}>{recipe.title}</h3>
-          {recipe.category && (
-            <span className={styles.category}>{recipe.category}</span>
-          )}
+          {recipe.category && <span className={styles.category}>{recipe.category}</span>}
           <p className={styles.snippet}>{snippet}</p>
           {recipe.ingredients.length > 0 && (
             <p className={styles.ingredients}>
@@ -89,7 +97,6 @@ export function RecipeCard({ recipe, onDeleted }: RecipeCardProps) {
           )}
           {creator && <p className={styles.creator}>by {creator}</p>}
 
-          {/* Owner actions */}
           {isOwner && (
             <div className={styles.ownerActions}>
               <button
@@ -119,7 +126,6 @@ export function RecipeCard({ recipe, onDeleted }: RecipeCardProps) {
         </div>
       </div>
 
-      {/* Confirmation dialog */}
       {showConfirm && (
         <div
           className={styles.overlay}
