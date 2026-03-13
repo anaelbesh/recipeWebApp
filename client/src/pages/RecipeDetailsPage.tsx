@@ -29,6 +29,8 @@ export function RecipeDetailsPage() {
   const [deleteError, setDeleteError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isLowResImage, setIsLowResImage] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -43,6 +45,19 @@ export function RecipeDetailsPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  /* Handle ESC key to close lightbox */
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && lightboxOpen) {
+        setLightboxOpen(false);
+      }
+    };
+    if (lightboxOpen) {
+      document.addEventListener('keydown', handleEsc);
+      return () => document.removeEventListener('keydown', handleEsc);
+    }
+  }, [lightboxOpen]);
 
   const handleDelete = async () => {
     if (!id) return;
@@ -95,52 +110,82 @@ export function RecipeDetailsPage() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        {/* Back */}
-        <button className={styles.backLink} onClick={() => navigate('/recipes')}>
+        {/* Back button */}
+        <button 
+          className={styles.backLink} 
+          onClick={() => navigate('/recipes')}
+          aria-label="Go back to recipes list"
+        >
           ← Back to Recipes
         </button>
 
-        {/* Layout: image + details */}
-        <div className={styles.layout}>
+        {/* Main card: hero image + content */}
+        <article className={styles.card} role="main">
           {recipe.imageUrl && (
-            <div className={styles.imageWrapper}>
+            <button 
+              className={styles.heroImageWrapper}
+              onClick={() => setLightboxOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setLightboxOpen(true);
+                }
+              }}
+              aria-label={`View full size photo of ${recipe.title}`}
+              type="button"
+            >
               <img
                 src={recipe.imageUrl}
-                alt={recipe.title}
-                className={styles.image}
+                alt={`Photo of ${recipe.title}`}
+                className={`${styles.image} ${isLowResImage ? styles.imageLowRes : ''}`}
+                onLoad={(e) => {
+                  const img = e.currentTarget as HTMLImageElement;
+                  const ratio = img.naturalWidth / img.naturalHeight;
+                  // Use contain mode if image is very small OR has extreme portrait ratio
+                  if (img.naturalWidth < 800 || ratio < 0.5) {
+                    setIsLowResImage(true);
+                  }
+                }}
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).parentElement!.style.display = 'none';
                 }}
               />
-            </div>
+            </button>
           )}
 
           <div className={styles.details}>
             <h1 className={styles.title}>{recipe.title}</h1>
-            {recipe.category && (
-              <span className={styles.categoryBadge}>{recipe.category}</span>
-            )}
-            {creatorName && (
-              <p className={styles.creator}>by {creatorName}</p>
-            )}
+            
+            <div className={styles.metadata}>
+              {recipe.category && (
+                <span className={styles.categoryBadge} aria-label={`Category: ${recipe.category}`}>
+                  {recipe.category}
+                </span>
+              )}
+              {creatorName && (
+                <p className={styles.creator}>
+                  <span aria-label="Recipe creator">by</span> {creatorName}
+                </p>
+              )}
+            </div>
 
             {recipe.ingredients.length > 0 && (
-              <div className={styles.section}>
+              <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>Ingredients</h2>
-                <ul className={styles.ingredientList}>
+                <ul className={styles.ingredientList} role="list">
                   {recipe.ingredients.map((ing, i) => (
-                    <li key={i} className={styles.ingredientItem}>
+                    <li key={i} className={styles.ingredientItem} role="listitem">
                       {ing}
                     </li>
                   ))}
                 </ul>
-              </div>
+              </section>
             )}
 
-            <div className={styles.section}>
+            <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Instructions</h2>
               <p className={styles.instructions}>{recipe.instructions}</p>
-            </div>
+            </section>
 
             {/* Owner actions */}
             {isOwner && (
@@ -149,6 +194,7 @@ export function RecipeDetailsPage() {
                   type="button"
                   variant="secondary"
                   onClick={() => navigate(`/recipes/${recipe._id}/edit`)}
+                  aria-label={`Edit recipe: ${recipe.title}`}
                 >
                   Edit Recipe
                 </Button>
@@ -156,6 +202,7 @@ export function RecipeDetailsPage() {
                   variant="danger"
                   onClick={() => setShowConfirm(true)}
                   disabled={isDeleting}
+                  aria-label={`Delete recipe: ${recipe.title}`}
                 >
                   Delete Recipe
                 </Button>
@@ -163,17 +210,50 @@ export function RecipeDetailsPage() {
             )}
 
             {deleteError && (
-              <p className={styles.deleteError}>{deleteError}</p>
+              <div className={styles.deleteError} role="alert">
+                {deleteError}
+              </div>
             )}
           </div>
-        </div>
+        </article>
+
+        {/* Lightbox modal for full-size image */}
+        {lightboxOpen && recipe.imageUrl && (
+          <div 
+            className={styles.lightboxOverlay}
+            onClick={() => setLightboxOpen(false)}
+            role="presentation"
+          >
+            <div className={styles.lightboxContent} onClick={(e) => e.stopPropagation()}>
+              <button
+                className={styles.lightboxClose}
+                onClick={() => setLightboxOpen(false)}
+                aria-label="Close image viewer"
+                type="button"
+              >
+                ✕
+              </button>
+              <img
+                src={recipe.imageUrl}
+                alt={`Full size photo of ${recipe.title}`}
+                className={styles.lightboxImage}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Confirmation dialog */}
         {showConfirm && (
-          <div className={styles.overlay}>
-            <div className={styles.dialog}>
-              <h3 className={styles.dialogTitle}>Delete recipe?</h3>
-              <p className={styles.dialogBody}>
+          <div className={styles.overlay} role="presentation">
+            <div 
+              className={styles.dialog}
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="delete-dialog-title"
+              aria-describedby="delete-dialog-body"
+            >
+              <h2 className={styles.dialogTitle} id="delete-dialog-title">Delete recipe?</h2>
+              <p className={styles.dialogBody} id="delete-dialog-body">
                 This action cannot be undone. &ldquo;{recipe.title}&rdquo; will be permanently removed.
               </p>
               <div className={styles.dialogActions}>
@@ -181,6 +261,7 @@ export function RecipeDetailsPage() {
                   variant="secondary"
                   onClick={() => setShowConfirm(false)}
                   disabled={isDeleting}
+                  aria-label="Cancel deletion"
                 >
                   Cancel
                 </Button>
@@ -188,6 +269,7 @@ export function RecipeDetailsPage() {
                   variant="danger"
                   onClick={handleDelete}
                   isLoading={isDeleting}
+                  aria-label="Confirm deletion"
                 >
                   Yes, delete
                 </Button>

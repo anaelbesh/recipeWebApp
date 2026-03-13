@@ -103,4 +103,22 @@ export const recipesApi = {
     });
     return data;
   },
+
+  /**
+   * Upload a recipe image file.
+   * Sends multipart/form-data with field "image".
+   * Returns { imageUrl: "/uploads/recipe-images/<filename>" }
+   */
+  uploadImage: async (file: File): Promise<{ imageUrl: string }> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const { data } = await apiClient.post<{ imageUrl: string }>(
+      '/uploads/recipe-image',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    return data;
+  },
 };

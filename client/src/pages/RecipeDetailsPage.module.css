@@ -1,172 +1,349 @@
 .page {
   min-height: 100vh;
-  background: #f9fafb;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   padding: 2rem 1rem 4rem;
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .container {
-  max-width: 880px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  padding: 0;
 }
 
-/* ── Back link ─────────────────────────────────── */
+/* ── Back link ─────────────────────────────────– */
 .backLink {
   background: none;
   border: none;
-  padding: 0;
+  padding: 0.5rem 0;
   color: #667eea;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   text-align: left;
   width: fit-content;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .backLink:hover {
-  text-decoration: underline;
+  color: #5a67d8;
+  transform: translateX(-2px);
 }
 
-/* ── Main layout: image + details ──────────────── */
-.layout {
+/* ── Main card: vertical flow (hero image + content) ────── */
+.card {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 2px 12px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
 }
 
-@media (min-width: 640px) {
-  .layout {
-    flex-direction: row;
-  }
-}
-
-/* ── Image ─────────────────────────────────────── */
-.imageWrapper {
-  width: 100%;
-  max-height: 320px;
-  overflow: hidden;
+/* ── Hero image: top of card (CONSISTENT ASPECT RATIO) ──── */
+.heroImageWrapper {
+  width: 100% !important;
+  aspect-ratio: 16 / 9;
+  max-height: 520px !important;
   background: #f3f4f6;
-  flex-shrink: 0;
+  overflow: hidden !important;
+  position: relative;
+  border: none;
+  padding: 0 !important;
+  cursor: zoom-in;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0 !important;
+  display: block !important;
 }
 
-@media (min-width: 640px) {
-  .imageWrapper {
-    width: 320px;
-    max-height: unset;
-    min-height: 280px;
-  }
+.heroImageWrapper:hover {
+  background: #e5e7eb;
 }
 
+.heroImageWrapper:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: -2px;
+}
+
+/* SINGLE IMAGE STYLE - NO EXCEPTIONS */
 .image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display: block !important;
+  image-rendering: auto;
+  pointer-events: none;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
 }
 
-/* ── Details ───────────────────────────────────── */
+/* Smart fallback: use contain for small or extreme aspect ratio images */
+.imageLowRes {
+  object-fit: contain !important;
+}
+
+/* ── Details section ───────────────────────────── */
 .details {
-  padding: 1.75rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2rem;
   flex: 1;
+  padding: 2.5rem;
+}
+
+@media (max-width: 767px) {
+  .details {
+    padding: 1.75rem 1.5rem;
+    gap: 1.75rem;
+  }
 }
 
 .title {
   margin: 0;
-  font-size: 1.65rem;
-  font-weight: 700;
+  font-size: clamp(1.75rem, 6vw, 2.75rem);
+  font-weight: 900;
   color: #111827;
   line-height: 1.2;
+  letter-spacing: -0.8px;
+}
+
+.metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .creator {
   margin: 0;
-  font-size: 0.875rem;
-  color: #667eea;
-  font-weight: 600;
+  font-size: 0.95rem;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .categoryBadge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #5b21b6;
-  background: #ede9fe;
-  border-radius: 20px;
-  padding: 0.2rem 0.75rem;
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  border-radius: 12px;
+  padding: 0.5rem 1.25rem;
   width: fit-content;
+  box-shadow: 0 2px 8px rgba(88, 28, 135, 0.12);
 }
 
 /* ── Sections ──────────────────────────────────── */
 .section {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1.25rem;
+}
+
+.section:not(:last-of-type) {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .sectionTitle {
   margin: 0;
-  font-size: 1rem;
+  font-size: clamp(1.1rem, 3vw, 1.3rem);
   font-weight: 700;
-  color: #374151;
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .ingredientList {
   margin: 0;
-  padding-left: 1.25rem;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.85rem;
+}
+
+@media (max-width: 767px) {
+  .ingredientList {
+    gap: 0.75rem;
+  }
 }
 
 .ingredientItem {
-  font-size: 0.9rem;
-  color: #4b5563;
+  font-size: 0.95rem;
+  color: #374151;
+  line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+}
+
+.ingredientItem::before {
+  content: '•';
+  color: #667eea;
+  font-weight: bold;
+  flex-shrink: 0;
 }
 
 .instructions {
   margin: 0;
   font-size: 0.95rem;
-  color: #4b5563;
-  line-height: 1.7;
-  white-space: pre-wrap;
+  color: #374151;
+  line-height: 1.8;
+  white-space: pre-line;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
 }
 
 /* ── Owner actions ─────────────────────────────── */
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 1rem;
   margin-top: auto;
-  padding-top: 0.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 640px) {
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
 }
 
 .deleteError {
   margin: 0;
-  color: #dc2626;
-  font-size: 0.875rem;
+  padding: 0.875rem 1.25rem;
+  background: #fee2e2;
+  border-left: 4px solid #dc2626;
+  color: #991b1b;
+  font-size: 0.9rem;
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+/* ── Lightbox modal for viewing full-size image ──── */
+.lightboxOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.lightboxContent {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightboxImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  image-rendering: auto;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.lightboxClose {
+  position: absolute;
+  top: -3rem;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 310;
+}
+
+.lightboxClose:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.lightboxClose:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .lightboxClose {
+    top: 1rem;
+    background: rgba(0, 0, 0, 0.6);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
 }
 
 /* ── Error/not found state ─────────────────────── */
 .errorText {
-  color: #dc2626;
+  color: #991b1b;
   font-size: 0.95rem;
-  margin: 0 0 1rem;
+  margin: 0;
+  padding: 1.125rem 1.5rem;
+  background: #fee2e2;
+  border-radius: 12px;
+  border-left: 4px solid #dc2626;
+  line-height: 1.6;
 }
 
 /* ── Confirmation overlay ──────────────────────── */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -176,33 +353,134 @@
 
 .dialog {
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-  padding: 2rem 1.75rem;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 2rem;
   max-width: 420px;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .dialogTitle {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: #111827;
 }
 
 .dialogBody {
   margin: 0;
-  font-size: 0.925rem;
-  color: #4b5563;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  color: #6b7280;
+  line-height: 1.6;
 }
 
 .dialogActions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   justify-content: flex-end;
   flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+/* ── Responsive design improvements ──────────────────── */
+@media (max-width: 1024px) {
+  .heroImageWrapper {
+    aspect-ratio: 16 / 9;
+    max-height: 380px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .card {
+    border-radius: 16px;
+  }
+
+  .heroImageWrapper {
+    aspect-ratio: 16 / 9;
+    max-height: 360px !important;
+  }
+
+  .heroDebug::before {
+    content: 'H: 360px';
+  }
+
+  .details {
+    padding: 2rem 1.5rem;
+    gap: 1.5rem;
+  }
+
+  .title {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .metadata {
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .categoryBadge {
+    font-size: 0.85rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.1rem;
+  }
+
+  .ingredientList {
+    gap: 0.75rem;
+  }
+
+  .ingredientItem {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .instructions {
+    font-size: 0.9rem;
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .container {
+    max-width: 100%;
+    gap: 0.75rem;
+  }
+
+  .card {
+    border-radius: 12px;
+  }
+
+  .heroImageWrapper {
+    aspect-ratio: 4 / 3;
+    max-height: 320px !important;
+  }
+
+  .details {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .title {
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
 }
