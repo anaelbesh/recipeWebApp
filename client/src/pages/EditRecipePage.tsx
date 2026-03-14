@@ -65,6 +65,9 @@ export function EditRecipePage() {
         ingredients: ingredientList.length ? ingredientList : [],
         imageUrl: values.imageUrl.trim() || undefined,
         category: values.category,
+        kosherType:    values.kosherType    || undefined,
+        cookingMethod: values.cookingMethod || undefined,
+        dishType:      values.dishType      || undefined,
       });
 
       setSuccessMsg('Recipe updated! Redirecting…');
@@ -135,6 +138,9 @@ export function EditRecipePage() {
     ingredients: recipe.ingredients.join(', '),
     imageUrl: recipe.imageUrl ?? '',
     category: recipe.category || 'Other',
+    kosherType:    recipe.kosherType    ?? 'Parve',
+    cookingMethod: recipe.cookingMethod ?? 'Pan',
+    dishType:      recipe.dishType      ?? 'Main',
   };
 
   return (

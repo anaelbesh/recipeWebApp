@@ -38,11 +38,36 @@ const recipeSchema = new Schema<IRecipe>(
       trim: true,
       index: true,
     },
+    kosherType: {
+      type: String,
+      enum: ['Meat', 'Dairy', 'Parve'],
+      default: 'Parve',
+      required: true,
+    },
+    cookingMethod: {
+      type: String,
+      enum: ['Grill', 'Oven', 'Pan', 'NoCook', 'Boil', 'Fry'],
+      default: 'Pan',
+      required: true,
+    },
+    dishType: {
+      type: String,
+      enum: ['Main', 'Side', 'Dessert', 'Snack', 'Spread'],
+      default: 'Main',
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'createdBy is required'],
       index: true,
+    },
+    searchText: {
+      type: String,
+      default: '',
+    },
+    embedding: {
+      type: [Number],
+      default: [],
     },
   },
   { timestamps: true }
