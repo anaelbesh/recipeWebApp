@@ -11,6 +11,7 @@ import recipeRoutes from "./routes/recipeRoutes";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
 import aiRoutes from "./routes/aiRoutes";
+import commentRoutes from "./routes/commentRoutes";
 import { setupSwagger } from "./config/swagger";
 
 export const app = express();
@@ -53,6 +54,7 @@ function initializeRoutes(app: express.Application) {
     app.use("/api/auth", authRoutes);
     app.use("/api/users", userRoutes);
     app.use("/api/ai", aiRoutes);
+    app.use("/api/comments", commentRoutes);
 
     // serve index.html for all non-API routes (/login, /chat, /profile, etc.)
     app.use((req, res) => {
@@ -65,11 +67,16 @@ async function runServer() {
     prerequisites();
     const server = http.createServer(app);
     app.use(express.json());
-    initSocket(server);
-    initializeRoutes(app);
 
     // Swagger docs
     setupSwagger(app);
+
+    initSocket(server);
+
+    // Make sure this is the last function we are calling
+    // because it has a function inside that mark all non "/api" endpoint we did not mapped
+    // to index.html
+    initializeRoutes(app);
 
     await connectMongo();
 

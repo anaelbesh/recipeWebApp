@@ -203,6 +203,24 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         },
       },
       // ── Recipes (Comments & Likes) ───────────────────────
+      CommentWithUser: {
+        type: "object",
+        properties: {
+          _id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
+          user: {
+            type: "object",
+            properties: {
+              _id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
+              username: { type: "string", example: "johndoe" },
+              profilePicture: { type: "string", nullable: true, example: "https://example.com/avatar.jpg" },
+            },
+          },
+          recipe: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0e" },
+          content: { type: "string", example: "Delicious recipe!" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
       Comment: {
         type: "object",
         properties: {
@@ -662,6 +680,41 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
       },
     },
     "/api/recipes/{recipeId}/comments": {
+      get: {
+        tags: ["Recipes"],
+        summary: "Get all comments for a recipe",
+        description: "Returns a list of all comments for a specific recipe, with user information populated.",
+        parameters: [
+          {
+            name: "recipeId",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "The recipe's MongoDB ObjectId",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "A list of comments",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/CommentWithUser" },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
       post: {
         tags: ["Recipes"],
         summary: "Add a comment to a recipe",
@@ -688,7 +741,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             description: "Comment created",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/Comment" },
+                schema: { $ref: "#/components/schemas/CommentWithUser" },
               },
             },
           },
@@ -751,6 +804,91 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
               },
             },
+          },
+        },
+      },
+    },
+    // ═══════════════════  COMMENTS  ════════════════════════
+    "/api/comments/{commentId}": {
+      put: {
+        tags: ["Comments"],
+        summary: "Update a comment",
+        description: "Updates a comment's content. Only the comment owner can perform this action.",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: "commentId",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "The comment's MongoDB ObjectId",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/AddCommentRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Comment updated successfully",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CommentWithUser" },
+              },
+            },
+          },
+          "400": {
+            description: "Comment content is required",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+          },
+          "401": {
+            description: "Unauthorized – missing or invalid token",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+          },
+          "403": {
+            description: "Forbidden – you are not the owner of this comment",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+          },
+          "404": {
+            description: "Comment not found",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+          },
+        },
+      },
+      delete: {
+        tags: ["Comments"],
+        summary: "Delete a comment",
+        description: "Deletes a comment. Only the comment owner can perform this action.",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: "commentId",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "The comment's MongoDB ObjectId",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Comment deleted successfully",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/MessageResponse" } } },
+          },
+          "401": {
+            description: "Unauthorized – missing or invalid token",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+          },
+          "403": {
+            description: "Forbidden – you are not the owner of this comment",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+          },
+          "404": {
+            description: "Comment not found",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
           },
         },
       },
