@@ -93,10 +93,6 @@ export function ChatWindow({
         <div className={styles.avatar}>{getInitials(partner.name)}</div>
         <div className={styles.headerInfo}>
           <h2>{partner.name}</h2>
-          <div className={styles.status}>
-            <span className={styles.statusDot}></span>
-            <span>Online</span>
-          </div>
         </div>
       </div>
 
