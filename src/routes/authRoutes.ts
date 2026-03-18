@@ -13,7 +13,7 @@ const router = Router();
 // Local auth
 router.post('/register', register);
 router.post('/login', login);
-router.post('/logout', verifyToken, logout);
+router.post('/logout', logout);
 router.post('/refresh', refreshToken);
 
 // Google OAuth

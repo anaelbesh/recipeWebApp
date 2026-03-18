@@ -21,7 +21,7 @@ const generateTokens = (userId: string, username: string, email: string): { acce
 // Register new user
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, rememberMe } = req.body;
 
     if (!username || !email || !password) {
         return res.status(400).json({ message: 'All fields are required' });
@@ -42,10 +42,14 @@ export const register = async (req: Request, res: Response) => {
 
     const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.username, user.email);
 
+    const isRememberMe = Boolean(rememberMe);
+    const ttlMs = isRememberMe ? authConfig.rememberMeTtlMs : authConfig.refreshTokenTtlMs;
+
     await RefreshToken.create({
       userId: user._id,
       token: refreshToken,
-      expiresAt: new Date(Date.now() + authConfig.refreshTokenTtlMs)
+      expiresAt: new Date(Date.now() + ttlMs),
+      rememberMe: isRememberMe
     });
 
     res.status(201).json({
@@ -62,7 +66,7 @@ export const register = async (req: Request, res: Response) => {
 // Login user
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
@@ -89,10 +93,14 @@ export const login = async (req: Request, res: Response) => {
     // Delete old refresh tokens for this user to avoid duplicates
     await RefreshToken.deleteMany({ userId: user._id });
     
+    const isRememberMe = Boolean(rememberMe);
+    const ttlMs = isRememberMe ? authConfig.rememberMeTtlMs : authConfig.refreshTokenTtlMs;
+
     await RefreshToken.create({
       userId: user._id,
       token: refreshToken,
-      expiresAt: new Date(Date.now() + authConfig.refreshTokenTtlMs)
+      expiresAt: new Date(Date.now() + ttlMs),
+      rememberMe: isRememberMe
     });
 
     res.status(200).json({
@@ -122,6 +130,12 @@ export const refreshToken = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Invalid refresh token' });
     }
 
+    // Check if token has expired
+    if (tokenDoc.expiresAt < new Date()) {
+      await RefreshToken.deleteOne({ token: refreshToken });
+      return res.status(403).json({ message: 'Refresh token has expired' });
+    }
+
     await RefreshToken.deleteOne({ token: refreshToken });
 
     const user = await User.findById(decoded.id);
@@ -129,10 +143,15 @@ export const refreshToken = async (req: Request, res: Response) => {
 
     const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokens(user._id.toString(), user.username, user.email);
 
+    // Preserve the rememberMe flag from the old token
+    const isRememberMe = tokenDoc.rememberMe || false;
+    const ttlMs = isRememberMe ? authConfig.rememberMeTtlMs : authConfig.refreshTokenTtlMs;
+
     await RefreshToken.create({
       userId: decoded.id,
       token: newRefreshToken,
-      expiresAt: new Date(Date.now() + authConfig.refreshTokenTtlMs)
+      expiresAt: new Date(Date.now() + ttlMs),
+      rememberMe: isRememberMe
     });
 
     res.status(200).json({ accessToken: newAccessToken, refreshToken: newRefreshToken });

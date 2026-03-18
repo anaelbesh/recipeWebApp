@@ -70,10 +70,12 @@ const finishOAuthHandshake = async (
   const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.username, user.email);
 
   await RefreshToken.deleteMany({ userId: user._id });
+  // OAuth users always get 30-day remember me sessions
   await RefreshToken.create({
     userId: user._id,
     token: refreshToken,
-    expiresAt: new Date(Date.now() + authConfig.refreshTokenTtlMs),
+    expiresAt: new Date(Date.now() + authConfig.rememberMeTtlMs),
+    rememberMe: true,
   });
 
   // Redirect client with tokens in the URL fragment / query string.

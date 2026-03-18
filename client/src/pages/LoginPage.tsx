@@ -13,6 +13,7 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {},
   );
@@ -39,7 +40,7 @@ export function LoginPage() {
     // It is cleared when the user edits a field (see onChange handlers below).
     setIsLoading(true);
     try {
-      await login({ email, password });
+      await login({ email, password, rememberMe });
       navigate('/profile');
     } catch (err: unknown) {
       const msg =
@@ -77,6 +78,18 @@ export function LoginPage() {
             error={errors.password}
             placeholder="••••••••"
           />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <input
+              id="rememberMe"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              style={{ cursor: 'pointer' }}
+            />
+            <label htmlFor="rememberMe" style={{ cursor: 'pointer', fontSize: '14px' }}>
+              Remember me
+            </label>
+          </div>
           <Button type="submit" isLoading={isLoading}>
             Sign in
           </Button>
