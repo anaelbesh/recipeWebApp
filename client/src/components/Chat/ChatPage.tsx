@@ -8,24 +8,39 @@ import { ChatWindow } from './ChatWindow';
 import styles from './ChatPage.module.css';
 
 export function ChatPage() {
-    const { user: authUser } = useAuth();
+    const { user: authUser, isLoading } = useAuth();
+
+    if (isLoading) {
+        return <div className={styles.loading}>Loading chat...</div>;
+    }
+
+    if (!authUser) {
+        return <div className={styles.loading}>Please log in to use chat.</div>;
+    }
 
     // Map the auth user to the chat User shape
     const currentUser: User = {
-        _id: authUser!.id,
-        name: authUser!.username,
-        email: authUser!.email,
+        _id: authUser.id,
+        name: authUser.username,
+        email: authUser.email,
     };
 
     const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [usersError, setUsersError] = useState('');
     const [selectedPartner, setSelectedPartner] = useState<User | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
 
     // Load all users from the DB on mount
     useEffect(() => {
         fetchUsers()
-            .then(setAllUsers)
-            .catch((err) => console.error('Failed to load users:', err));
+            .then((data) => {
+                setAllUsers(data);
+                setUsersError('');
+            })
+            .catch((err) => {
+                setUsersError('Failed to load users');
+                console.error('Failed to load users:', err);
+            });
     }, []);
 
     const handleReceiveMessage = useCallback((message: Message) => {
@@ -111,6 +126,7 @@ export function ChatPage() {
                 selectedPartner={selectedPartner}
                 onSelectPartner={handleSelectPartner}
             />
+            {usersError && <div className={styles.usersError}>{usersError}</div>}
             <ChatWindow
                 currentUser={currentUser}
                 partner={selectedPartner}

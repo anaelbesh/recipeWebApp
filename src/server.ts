@@ -1,5 +1,4 @@
-// dotenv is pre-loaded via ts-node-dev --require dotenv/config (see package.json).
-// This means process.env is fully populated before any module-level code runs.
+import "dotenv/config";
 import express from "express";
 import http from "http";
 import cors from "cors";

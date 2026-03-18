@@ -7,6 +7,11 @@ const likeController = {
         try {
             const { recipeId } = req.params;
             const userId = req.user?.id;
+
+            if (!userId) {
+                return res.status(401).json({ message: "Authentication required" });
+            }
+
             const existingLike = await Like.findOne({ user: userId, recipe: recipeId as string });
 
             if (existingLike) {

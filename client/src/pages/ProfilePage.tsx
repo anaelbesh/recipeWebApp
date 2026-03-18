@@ -21,6 +21,26 @@ export function ProfilePage() {
   const [recipesError, setRecipesError] = useState('');
   const [showEdit, setShowEdit] = useState(false);
 
+  const handleLikeToggle = async (recipeId: string) => {
+    if (!user) return;
+    try {
+      const response = await recipesApi.toggleLike(recipeId);
+      setRecipes((prev) =>
+        prev.map((recipe) => {
+          if (recipe._id !== recipeId) return recipe;
+          const likeCount = recipe.likeCount ?? 0;
+          return {
+            ...recipe,
+            likedByMe: response.liked,
+            likeCount: response.liked ? likeCount + 1 : Math.max(0, likeCount - 1),
+          };
+        })
+      );
+    } catch {
+      // ignore
+    }
+  };
+
   const fetchMyRecipes = useCallback(async () => {
     setRecipesLoading(true);
     setRecipesError('');
@@ -119,6 +139,7 @@ export function ProfilePage() {
                 key={recipe._id}
                 recipe={recipe}
                 onDeleted={(id) => setRecipes((prev) => prev.filter((r) => r._id !== id))}
+                onLike={handleLikeToggle}
               />
             ))}
           </div>
@@ -136,4 +157,3 @@ export function ProfilePage() {
     </div>
   );
 }
-

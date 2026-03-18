@@ -15,3 +15,14 @@
   }
 }
 
+.loading {
+  padding: 24px;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.usersError {
+  color: #b91c1c;
+  font-size: 0.85rem;
+  padding: 8px 0;
+}

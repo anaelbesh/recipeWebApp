@@ -1,10 +1,46 @@
-import { Response, NextFunction } from 'express';
+import { Response } from 'express';
 import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/authMiddleware';
 import * as recipeService from '../services/recipeService';
 import { Recipe } from '../models/Recipe';
+import { Comment } from '../models/Comment';
+import { Like } from '../models/Like';
 import { RECIPE_CATEGORIES } from '../constants/recipeCategories';
 import { embedText, cosineSimilarity, EmbedError } from '../services/geminiEmbeddings';
+
+const attachRecipeMeta = async (recipes: any[], userId?: string) => {
+  if (!recipes.length) return recipes;
+
+  const recipeIds = recipes.map((r) => new mongoose.Types.ObjectId(r._id));
+
+  const [commentCounts, likeCounts, likedDocs] = await Promise.all([
+    Comment.aggregate([
+      { $match: { recipe: { $in: recipeIds } } },
+      { $group: { _id: '$recipe', count: { $sum: 1 } } },
+    ]),
+    Like.aggregate([
+      { $match: { recipe: { $in: recipeIds } } },
+      { $group: { _id: '$recipe', count: { $sum: 1 } } },
+    ]),
+    userId
+      ? Like.find({ user: userId, recipe: { $in: recipeIds } }, { recipe: 1 }).lean()
+      : Promise.resolve([]),
+  ]);
+
+  const commentMap = new Map(commentCounts.map((c) => [String(c._id), c.count]));
+  const likeMap = new Map(likeCounts.map((c) => [String(c._id), c.count]));
+  const likedSet = new Set(likedDocs.map((l: any) => String(l.recipe)));
+
+  return recipes.map((recipe) => {
+    const id = String(recipe._id);
+    return {
+      ...recipe,
+      commentCount: commentMap.get(id) ?? 0,
+      likeCount: likeMap.get(id) ?? 0,
+      likedByMe: userId ? likedSet.has(id) : false,
+    };
+  });
+};
 
 // ── GET /api/recipes/categories ───────────────────────────────────────────────
 export const getCategories = (_req: AuthRequest, res: Response) => {
@@ -35,7 +71,9 @@ export const getRecipes = async (req: AuthRequest, res: Response) => {
       category: category || undefined,
     });
 
-    return res.status(200).json(result);
+    const items = await attachRecipeMeta(result.items as any[], userId);
+
+    return res.status(200).json({ ...result, items });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error fetching recipes', error: error.message });
   }
@@ -45,6 +83,7 @@ export const getRecipes = async (req: AuthRequest, res: Response) => {
 export const getRecipeById = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
+    const userId = req.user?.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Invalid recipe id' });
@@ -55,7 +94,20 @@ export const getRecipeById = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'Recipe not found' });
     }
 
-    return res.status(200).json({ recipe });
+    const [commentCount, likeCount, likedByMe] = await Promise.all([
+      Comment.countDocuments({ recipe: id }),
+      Like.countDocuments({ recipe: id }),
+      userId ? Like.exists({ recipe: id, user: userId }) : Promise.resolve(null),
+    ]);
+
+    return res.status(200).json({
+      recipe: {
+        ...recipe,
+        commentCount,
+        likeCount,
+        likedByMe: Boolean(likedByMe),
+      },
+    });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error fetching recipe', error: error.message });
   }

@@ -18,17 +18,21 @@ export const getMe = async (req: AuthRequest, res: Response) => {
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
   try {
     const currentUserId = req.user?.id;
+    const filter = currentUserId ? { _id: { $ne: currentUserId } } : {};
+
     const users = await User.find(
-      { _id: { $ne: currentUserId } },
+      filter,
       { password: 0, providerId: 0, __v: 0 }
     ).lean();
 
-    const mapped = users.map((u) => ({
-      _id: u._id.toString(),
-      name: u.username,
-      email: u.email,
-      profilePicture: u.profilePicture,
-    }));
+    const mapped = users
+      .filter((u) => u && u._id)
+      .map((u) => ({
+        _id: String(u._id),
+        name: u.username,
+        email: u.email,
+        profilePicture: u.profilePicture,
+      }));
 
     res.json(mapped);
   } catch (error) {

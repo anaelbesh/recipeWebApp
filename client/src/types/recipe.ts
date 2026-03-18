@@ -1,3 +1,15 @@
+export interface RecipeComment {
+  _id: string;
+  content: string;
+  recipe: string;
+  user: {
+    _id: string;
+    username: string;
+    profilePicture?: string;
+  };
+  createdAt: string;
+}
+
 export interface Recipe {
   _id: string;
   title: string;
@@ -14,6 +26,9 @@ export interface Recipe {
   createdAt: string;
   updatedAt: string;
   score?: number; // AI search relevance score (0–1)
+  commentCount?: number;
+  likeCount?: number;
+  likedByMe?: boolean;
 }
 
 export interface RecipeListResponse {

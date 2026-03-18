@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addComment } from "../controllers/commentController";
+import { addComment, getComments } from "../controllers/commentController";
 import likeController from "../controllers/likeController";
 import { verifyToken, optionalVerifyToken } from "../middleware/authMiddleware";
 import {
@@ -25,7 +25,7 @@ router.get('/categories', getCategories);
 // MUST be before /:id so it doesn't get caught as an id
 router.get('/ai-search', aiSearchRecipes as any);
 // GET  /api/recipes/:id    – public single recipe
-router.get("/:id", getRecipeById as any);
+router.get("/:id", optionalVerifyToken, getRecipeById as any);
 
 // POST /api/recipes        – create (auth required)
 router.post("/", verifyToken, createRecipe as any);
@@ -39,6 +39,8 @@ router.delete("/:id", verifyToken, deleteRecipe as any);
 // ── Comments & Likes (sub-resources) ──────────────────────────────────────────
 // POST /api/recipes/:recipeId/comments
 router.post("/:recipeId/comments", verifyToken, addComment);
+// GET /api/recipes/:recipeId/comments
+router.get("/:recipeId/comments", getComments);
 
 // POST /api/recipes/:recipeId/likes
 router.post("/:recipeId/likes", verifyToken, likeController.toggle);
