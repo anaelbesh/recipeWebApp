@@ -11,6 +11,7 @@ import recipeRoutes from "./routes/recipeRoutes";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
 import aiRoutes from "./routes/aiRoutes";
+import uploadRoutes from "./routes/uploadRoutes";
 import commentRoutes from "./routes/commentRoutes";
 import { setupSwagger } from "./config/swagger";
 
@@ -55,6 +56,7 @@ function initializeRoutes(app: express.Application) {
     app.use("/api/users", userRoutes);
     app.use("/api/ai", aiRoutes);
     app.use("/api/comments", commentRoutes);
+    app.use("/api/uploads", uploadRoutes);
 
     // serve index.html for all non-API routes (/login, /chat, /profile, etc.)
     app.use((req, res) => {

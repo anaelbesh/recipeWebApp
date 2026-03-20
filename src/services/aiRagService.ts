@@ -21,13 +21,22 @@ const SIMILARITY_THRESHOLD = 0.2;
 // ── Intent detection ──────────────────────────────────────────────────────────
 // Maps message keywords to one or more DB categories for hard-filtering candidates.
 const INTENT_MAP: Array<{ pattern: RegExp; categories: string[] }> = [
-  { pattern: /\b(fish|salmon|tuna|seafood|דג|דגים|סלמון|טונה)\b/i,          categories: ['Fish'] },
-  { pattern: /\b(salad|caesar|סלט|קיסר)\b/i,                                categories: ['Salad'] },
-  { pattern: /\b(bbq|grill|grilled|barbecue|מנגל|על האש|גריל)\b/i,          categories: ['Grill', 'Meat', 'Chicken', 'Burger'] },
-  { pattern: /\b(burger|hamburger|המבורגר)\b/i,                             categories: ['Burger'] },
-  { pattern: /\b(pizza|פיצה)\b/i,                                           categories: ['Pizza'] },
-  { pattern: /\b(pasta|spaghetti|penne|linguine|fettuccine|פסטה|ספגטי)\b/i, categories: ['Pasta'] },
-  { pattern: /\b(chicken|עוף|פרגית)\b/i,                                   categories: ['Chicken'] },
+  { pattern: /\b(fish|salmon|tuna|seafood|דג|דגים|סלמון|טונה)\b/i,          categories: ['Parve'] },
+  { pattern: /\b(salad|caesar|סלט|קיסר)\b/i,                                categories: ['Salads'] },
+  { pattern: /\b(bbq|grill|grilled|barbecue|מנגל|על האש|גריל)\b/i,          categories: ['Meat', 'Comfort Food'] },
+  { pattern: /\b(burger|hamburger|המבורגר)\b/i,                             categories: ['Meat', 'Sandwiches / Wraps'] },
+  { pattern: /\b(pizza|פיצה)\b/i,                                           categories: ['Meat', 'Comfort Food'] },
+  { pattern: /\b(pasta|spaghetti|penne|linguine|fettuccine|פסטה|ספגטי)\b/i, categories: ['Meat', 'Comfort Food'] },
+  { pattern: /\b(chicken|עוף|פרגית)\b/i,                                   categories: ['Meat'] },
+  { pattern: /\b(dairy|milk|cheese|cream|חלב|גבינה)\b/i,                   categories: ['Dairy'] },
+  { pattern: /\b(dessert|cake|sweet|chocolate|חלומות|עוגה|שוקולד)\b/i,        categories: ['Desserts', 'Pastries / Baked Goods'] },
+  { pattern: /\b(bread|bake|bagel|לחם|לחיים|בגל)\b/i,                       categories: ['Bread', 'Pastries / Baked Goods'] },
+  { pattern: /\b(breakfast|morning|eggs|cereal|בוקר|ביצים)\b/i,             categories: ['Breakfast'] },
+  { pattern: /\b(sauce|spread|condiment|חמאה|רטבים)\b/i,                    categories: ['Sauces & Spreads'] },
+  { pattern: /\b(wrap|sandwich|סנדוויץ|עטיפה)\b/i,                           categories: ['Sandwiches / Wraps'] },
+  { pattern: /\b(healthy|light|diet|balanced|בריא|קל)\b/i,                 categories: ['Healthy / Light'] },
+  { pattern: /\b(asian|thai|chinese|japanese|אסייתי|תאילנד|סין|יפן)\b/i,   categories: ['Asian'] },
+  { pattern: /\b(gluten.?free|no gluten|kosher for passover|פסח)\b/i,       categories: ['Gluten-Free'] },
 ];
 
 function detectIntent(message: string): string[] | null {

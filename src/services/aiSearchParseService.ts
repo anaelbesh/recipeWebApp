@@ -54,8 +54,21 @@ export class ParseConfidenceError extends Error {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const VALID_CATEGORIES = [
-  'Pizza', 'Pasta', 'Burger', 'Fish', 'Salad',
-  'Chicken', 'Meat', 'Grill', 'Spreads', 'Other',
+  'Meat',
+  'Dairy',
+  'Parve',
+  'Desserts',
+  'Pastries / Baked Goods',
+  'Bread',
+  'Salads',
+  'Asian',
+  'Sandwiches / Wraps',
+  'Comfort Food',
+  'Healthy / Light',
+  'Sauces & Spreads',
+  'Breakfast',
+  'Gluten-Free',
+  'Other',
 ];
 const VALID_KOSHER = new Set(['Meat', 'Dairy', 'Parve']);
 const VALID_COOKING = new Set(['Grill', 'Oven', 'Pan', 'NoCook', 'Boil', 'Fry']);
@@ -69,7 +82,7 @@ Parse the user's natural-language query into this EXACT JSON schema (no markdown
 {
   "normalizedQuery": "<cleaned English equivalent of the query>",
   "filters": {
-    "categoriesInclude": ["<one or more of: Pizza|Pasta|Burger|Fish|Salad|Chicken|Meat|Grill|Spreads|Other>"],
+    "categoriesInclude": ["<one or more of: Meat|Dairy|Parve|Desserts|Pastries / Baked Goods|Bread|Salads|Asian|Sandwiches / Wraps|Comfort Food|Healthy / Light|Sauces & Spreads|Breakfast|Gluten-Free|Other>"],
     "kosherType": "<Meat|Dairy|Parve or null>",
     "cookingMethod": "<Grill|Oven|Pan|NoCook|Boil|Fry or null>",
     "keywordsInclude": ["<key ingredient or preparation keyword>"],

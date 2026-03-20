@@ -2,7 +2,8 @@ import mongoose, { Schema } from 'mongoose';
 import { IRecipe } from './modelTypes';
 import { RECIPE_CATEGORIES } from '../constants/recipeCategories';
 
-const URL_REGEX = /^https?:\/\/.+/;
+// Accept both: absolute URLs (http/https) OR server-relative paths (/uploads/...)
+const URL_REGEX = /^(https?:\/\/.+|\/uploads\/.+)$/;
 
 const recipeSchema = new Schema<IRecipe>(
   {
@@ -28,7 +29,7 @@ const recipeSchema = new Schema<IRecipe>(
       type: String,
       validate: {
         validator: (v: string) => !v || URL_REGEX.test(v),
-        message: 'imageUrl must be a valid URL starting with http:// or https://',
+        message: 'imageUrl must be a valid URL (http/https) or server-relative path (/uploads/...)',
       },
     },
     category: {

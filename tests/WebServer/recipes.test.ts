@@ -96,7 +96,7 @@ describe("Recipe CRUD API", () => {
           instructions: "Mix flour, eggs, milk. Fry on pan until golden.",
           ingredients: ["flour", "eggs", "milk"],
           imageUrl: "https://example.com/pancakes.jpg",
-          category: "Other",
+          category: "Breakfast",
         });
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty("recipe");
@@ -129,6 +129,80 @@ describe("Recipe CRUD API", () => {
       expect(
         res.body.items.some((r: any) => r.title.toLowerCase().includes("pancake"))
       ).toBe(true);
+    });
+
+    it("should restrict regular search to title matches", async () => {
+      const suffix = Date.now().toString();
+      const recipesToCreate = [
+        {
+          title: `Test Recipe Hamburgler ${suffix}`,
+          instructions: "A short note about ham and bread.",
+          ingredients: ["ham", "bun"],
+          category: "Sandwiches / Wraps",
+        },
+        {
+          title: `Test Recipe Lasagna ${suffix}`,
+          instructions: "Contains ham but the title does not include it.",
+          ingredients: ["pasta", "tomato", "ham"],
+          category: "Comfort Food",
+        },
+        {
+          title: `Test Recipe Pasta Delight ${suffix}`,
+          instructions: "Rich with cream and pastry crumbs.",
+          ingredients: ["cream", "pasta", "mushroom"],
+          category: "Comfort Food",
+        },
+        {
+          title: `Test Recipe Bourekas ${suffix}`,
+          instructions: "Flaky pastry that mentions the word paste multiple times.",
+          ingredients: ["pastry", "cream"],
+          category: "Pastries / Baked Goods",
+        },
+        {
+          title: `Test Recipe Ribeye Steak ${suffix}`,
+          instructions: "Grilled steak cooked with herbs.",
+          ingredients: ["beef", "herbs"],
+          category: "Meat",
+        },
+      ];
+
+      const createdIds: string[] = [];
+      try {
+        for (const recipe of recipesToCreate) {
+          const res = await request(app)
+            .post("/api/recipes")
+            .set("Authorization", `Bearer ${ownerToken}`)
+            .send(recipe);
+          createdIds.push(res.body.recipe._id);
+        }
+
+        const runSearch = async (query: string, expectedTitle: string) => {
+          const res = await request(app)
+            .get("/api/recipes")
+            .query({ search: query, limit: 20 });
+          expect(res.status).toBe(200);
+          const normalized = query.toLowerCase();
+          expect(res.body.items.length).toBeGreaterThan(0);
+          expect(
+            res.body.items.every((r: any) => r.title.toLowerCase().includes(normalized))
+          ).toBe(true);
+          expect(
+            res.body.items.some((r: any) => r.title === expectedTitle)
+          ).toBe(true);
+        };
+
+        await runSearch(`ham`, `Test Recipe Hamburgler ${suffix}`);
+        await runSearch(`pas`, `Test Recipe Pasta Delight ${suffix}`);
+        await runSearch(`steak`, `Test Recipe Ribeye Steak ${suffix}`);
+      } finally {
+        await Promise.all(
+          createdIds.map((id) =>
+            request(app)
+              .delete(`/api/recipes/${id}`)
+              .set("Authorization", `Bearer ${ownerToken}`)
+          )
+        );
+      }
     });
 
     it("should return 401 when mine=true without auth", async () => {
@@ -218,7 +292,7 @@ describe("Recipe CRUD API", () => {
         .send({
           title: "Test Recipe To Delete",
           instructions: "This recipe will be deleted during testing.",
-          category: "Other",
+          category: "Breakfast",
         });
       deleteTargetId = res.body.recipe._id;
     });
