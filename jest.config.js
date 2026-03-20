@@ -2,6 +2,8 @@
 module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
+    // Load environment variables before tests run
+    setupFilesAfterEnv: ['./jest.setup.js'],
     // This tells Jest to transform .ts files using ts-jest
     transform: {
         '^.+\\.tsx?$': ['ts-jest', {

@@ -83,6 +83,11 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             minLength: 6,
             example: "securePassword123",
           },
+          rememberMe: {
+            type: "boolean",
+            description: "Optional. If true, refresh token expires in 30 days. Defaults to false (7 days).",
+            example: true,
+          },
         },
       },
       LoginRequest: {
@@ -97,6 +102,11 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           password: {
             type: "string",
             example: "securePassword123",
+          },
+          rememberMe: {
+            type: "boolean",
+            description: "Optional. If true, refresh token expires in 30 days. Defaults to false (7 days).",
+            example: true,
           },
         },
       },
@@ -274,7 +284,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         tags: ["Auth"],
         summary: "Register a new user",
         description:
-          "Creates a new user account. Returns access token and refresh token.",
+          "Creates a new user account. Returns access token and refresh token. If rememberMe is true, refresh token expires in 30 days (instead of default 7 days).",
         requestBody: {
           required: true,
           content: {
@@ -316,7 +326,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         tags: ["Auth"],
         summary: "Login with email and password",
         description:
-          "Authenticates user with email + password. Returns access token and refresh token.",
+          "Authenticates user with email + password. Returns access token and refresh token. If rememberMe is true, refresh token expires in 30 days (instead of default 7 days).",
         requestBody: {
           required: true,
           content: {
@@ -366,7 +376,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         tags: ["Auth"],
         summary: "Refresh access token",
         description:
-          "Send the refresh token in the request body. The old refresh token is invalidated (one-time use) and a new access + refresh token pair is returned (rotation).",
+          "Send the refresh token in the request body. The old refresh token is invalidated (one-time use) and a new access + refresh token pair is returned (rotation). The rememberMe flag is preserved during rotation.",
         requestBody: {
           required: true,
           content: {
@@ -408,7 +418,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         tags: ["Auth"],
         summary: "Logout and revoke refresh token",
         description:
-          "Deletes the refresh token from the DB, immediately invalidating it.",
+          "Deletes the refresh token from the DB, immediately invalidating it. The refresh token is sent in the request body, so this endpoint works even if the access token has expired.",
         requestBody: {
           required: true,
           content: {

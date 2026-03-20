@@ -190,6 +190,128 @@ describe("Test Auth Suite", () => {
     expect(response.status).toBe(400);
     expect(response.body.message).toContain("google");
   });
+
+  // ═══════════════════  REMEMBER ME TESTS  ═══════════════════
+  test("Login with rememberMe: true stores rememberMe flag in DB", async () => {
+    const rememberMeUser = {
+      email: `rememberme${Date.now()}@test.com`,
+      username: `rememberme${Date.now()}`,
+      password: "testpass123",
+    };
+
+    // First register the user
+    const registerResponse = await request(app).post("/api/auth/register").send(rememberMeUser);
+    expect(registerResponse.status).toBe(201);
+
+    // Then log in with rememberMe
+    const loginResponse = await request(app).post("/api/auth/login")
+      .send({ email: rememberMeUser.email, password: rememberMeUser.password, rememberMe: true });
+
+    expect(loginResponse.status).toBe(200);
+    expect(loginResponse.body).toHaveProperty("accessToken");
+    expect(loginResponse.body).toHaveProperty("refreshToken");
+
+    // Verify in DB that rememberMe flag is set
+    const tokenDoc = await RefreshToken.findOne({ token: loginResponse.body.refreshToken });
+    expect(tokenDoc).not.toBeNull();
+    expect(tokenDoc!.rememberMe).toBe(true);
+  });
+
+  test("Login without rememberMe (default) does not set rememberMe flag", async () => {
+    const defaultUser = {
+      email: `defaultlogin${Date.now()}@test.com`,
+      username: `defaultlogin${Date.now()}`,
+      password: "testpass123",
+    };
+
+    // Register the user
+    await request(app).post("/api/auth/register").send(defaultUser);
+
+    // Log in WITHOUT rememberMe
+    const loginResponse = await request(app).post("/api/auth/login")
+      .send({ email: defaultUser.email, password: defaultUser.password });
+
+    expect(loginResponse.status).toBe(200);
+
+    // Verify in DB that rememberMe flag is false (default)
+    const tokenDoc = await RefreshToken.findOne({ token: loginResponse.body.refreshToken });
+    expect(tokenDoc).not.toBeNull();
+    expect(tokenDoc!.rememberMe).toBe(false);
+  });
+
+  test("Register with rememberMe: true works", async () => {
+    const regRememberMeUser = {
+      email: `registerrememberme${Date.now()}@test.com`,
+      username: `registerrememberme${Date.now()}`,
+      password: "testpass123",
+      rememberMe: true,
+    };
+
+    const response = await request(app).post("/api/auth/register").send(regRememberMeUser);
+
+    expect(response.status).toBe(201);
+    expect(response.body).toHaveProperty("accessToken");
+    expect(response.body).toHaveProperty("refreshToken");
+
+    // Verify in DB that rememberMe flag is set
+    const tokenDoc = await RefreshToken.findOne({ token: response.body.refreshToken });
+    expect(tokenDoc).not.toBeNull();
+    expect(tokenDoc!.rememberMe).toBe(true);
+  });
+
+  test("Refresh token preserves rememberMe flag on rotation", async () => {
+    const rememberMeUser = {
+      email: `refreshrememberme${Date.now()}@test.com`,
+      username: `refreshrememberme${Date.now()}`,
+      password: "testpass123",
+    };
+
+    // Register with rememberMe
+    const registerResponse = await request(app).post("/api/auth/register")
+      .send({ ...rememberMeUser, rememberMe: true });
+
+    const initialRefreshToken = registerResponse.body.refreshToken;
+
+    // Verify initial token has rememberMe: true
+    const initialTokenDoc = await RefreshToken.findOne({ token: initialRefreshToken });
+    expect(initialTokenDoc!.rememberMe).toBe(true);
+
+    // Now refresh
+    const refreshResponse = await request(app).post("/api/auth/refresh")
+      .send({ refreshToken: initialRefreshToken });
+
+    expect(refreshResponse.status).toBe(200);
+
+    // Verify new token also has rememberMe: true (preserved)
+    const newRefreshToken = refreshResponse.body.refreshToken;
+    const newTokenDoc = await RefreshToken.findOne({ token: newRefreshToken });
+    expect(newTokenDoc).not.toBeNull();
+    expect(newTokenDoc!.rememberMe).toBe(true);
+  });
+
+  test("Expired refresh token (rememberMe or not) fails", async () => {
+    const expiredUser = {
+      email: `expiredtoken${Date.now()}@test.com`,
+      username: `expiredtoken${Date.now()}`,
+      password: "testpass123",
+    };
+
+    const registerResponse = await request(app).post("/api/auth/register").send(expiredUser);
+    const refreshToken = registerResponse.body.refreshToken;
+
+    // Manually set expiresAt to the past in the DB
+    await RefreshToken.findOneAndUpdate(
+      { token: refreshToken },
+      { expiresAt: new Date(Date.now() - 5000) } // 5 seconds ago
+    );
+
+    // Try to refresh with expired token
+    const response = await request(app).post("/api/auth/refresh")
+      .send({ refreshToken });
+
+    expect(response.status).toBe(403);
+    expect(response.body.message).toContain("expired");
+  });
 });
 
 describe("Test OAuth Suite", () => {

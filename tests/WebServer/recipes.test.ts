@@ -96,6 +96,7 @@ describe("Recipe CRUD API", () => {
           instructions: "Mix flour, eggs, milk. Fry on pan until golden.",
           ingredients: ["flour", "eggs", "milk"],
           imageUrl: "https://example.com/pancakes.jpg",
+          category: "Other",
         });
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty("recipe");
@@ -217,6 +218,7 @@ describe("Recipe CRUD API", () => {
         .send({
           title: "Test Recipe To Delete",
           instructions: "This recipe will be deleted during testing.",
+          category: "Other",
         });
       deleteTargetId = res.body.recipe._id;
     });
