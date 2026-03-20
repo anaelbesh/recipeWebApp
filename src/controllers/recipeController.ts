@@ -50,7 +50,10 @@ export const getCategories = (_req: AuthRequest, res: Response) => {
 // ── GET /api/recipes ───────────────────────────────────────────────────────────
 export const getRecipes = async (req: AuthRequest, res: Response) => {
   try {
-    const { search, page, limit, sort, mine, category, cursor } = req.query as Record<string, string>;
+    const { page, limit, sort, mine, category, cursor } = req.query as Record<string, string>;
+    const rawSearch = ((req.query.search as string | undefined) ?? (req.query.q as string | undefined) ?? '').trim();
+
+    const search = rawSearch || undefined;
 
     // "mine=true" requires auth; the router conditionally applies verifyToken,
     // so we just trust req.user when present.

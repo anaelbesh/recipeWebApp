@@ -38,6 +38,8 @@ export interface RecipeUpdateInput {
   dishType?: string;
 }
 
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // ── List / search ──────────────────────────────────────────────────────────────
 export const listRecipes = async (query: RecipeListQuery) => {
   const limit = Math.min(50, Math.max(1, Number(query.limit) || 10));
@@ -54,24 +56,25 @@ export const listRecipes = async (query: RecipeListQuery) => {
     baseFilter.category = query.category;
   }
 
-  let mongoSort: Record<string, unknown>;
+  const cleanedSearch = typeof query.search === 'string' ? query.search.trim() : '';
+  const hasSearch = cleanedSearch.length >= 2;
 
-  if (query.search) {
-    baseFilter.$text = { $search: query.search };
-    mongoSort = { score: { $meta: 'textScore' }, createdAt: -1, _id: -1 };
-  } else {
-    // Accept sort param like "-createdAt" or "title"
-    const sortField  = (query.sort || '-createdAt').replace(/^-/, '');
-    const sortOrder  = (query.sort || '-createdAt').startsWith('-') ? -1 : 1;
-    mongoSort = { [sortField]: sortOrder, _id: -1 };
+  if (hasSearch) {
+    const regex = escapeRegex(cleanedSearch);
+    baseFilter.title = { $regex: regex, $options: 'i' };
   }
+
+  const sortConfig = query.sort || '-createdAt';
+  const sortField  = sortConfig.replace(/^-/, '');
+  const sortOrder  = sortConfig.startsWith('-') ? -1 : 1;
+  const mongoSort = { [sortField]: sortOrder, _id: -1 };
 
   // ── Build page filter (adds cursor condition for cursor-based pagination) ───
   // Cursor is only used for non-search queries (stable sort required for correct pagination).
   const pageFilter: Record<string, unknown> = { ...baseFilter };
   let skip = 0;
 
-  if (query.cursor && !query.search) {
+  if (query.cursor && !hasSearch) {
     // Cursor-based: decode and apply range condition so we pick up exactly where we left off.
     // Cursor format: base64url(JSON { date: isoString, id: hexObjectId })
     try {
@@ -98,7 +101,7 @@ export const listRecipes = async (query: RecipeListQuery) => {
 
   // ── Fetch limit+1 to cheaply detect hasMore, plus total count ───────────────
   const [rawItems, total] = await Promise.all([
-    Recipe.find(pageFilter, query.search ? { score: { $meta: 'textScore' } } : undefined)
+    Recipe.find(pageFilter)
       .sort(mongoSort as any)
       .skip(skip)
       .limit(limit + 1)          // +1 lets us detect whether a next page exists
@@ -113,7 +116,7 @@ export const listRecipes = async (query: RecipeListQuery) => {
   // ── Build nextCursor from the last item in this page ───────────────────────
   // Only meaningful for non-search queries (cursor pagination requires stable order).
   let nextCursor: string | null = null;
-  if (hasMore && items.length > 0 && !query.search) {
+  if (hasMore && items.length > 0 && !hasSearch) {
     const last = items[items.length - 1] as any;
     nextCursor = Buffer.from(
       JSON.stringify({

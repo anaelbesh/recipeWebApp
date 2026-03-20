@@ -77,13 +77,13 @@ describe('POST /api/ai/search/parse', () => {
     expect(Array.isArray(res.body.warnings)).toBe(true);
   });
 
-  test('detects Pasta category keyword', async () => {
+  test('detects Comfort Food category from pasta keyword', async () => {
     const res = await request(app)
       .post('/api/ai/search/parse')
       .send({ query: 'I want a pasta dish', locale: 'en-US' });
 
     expect(res.status).toBe(200);
-    expect(res.body.filters.categoriesInclude).toContain('Pasta');
+    expect(res.body.filters.categoriesInclude).toContain('Comfort Food');
   });
 
   test('detects Dairy kosherType from "dairy" keyword', async () => {

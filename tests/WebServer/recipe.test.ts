@@ -1,6 +1,7 @@
 import request from "supertest";
 import mongoose from "mongoose";
 import { app } from "../../src/server";
+import { Recipe } from "../../src/models/Recipe";
 import { Comment } from "../../src/models/Comment";
 import { Like } from "../../src/models/Like";
 import User from "../../src/models/userModel";
@@ -8,7 +9,7 @@ import RefreshToken from "../../src/models/refreshTokenModel";
 import { connectMongo } from "../../src/db";
 
 let accessToken: string;
-const dummyRecipeId = new mongoose.Types.ObjectId().toString();
+let testRecipeId: string;
 
 describe("Recipe API Integration Tests", () => {
     beforeAll(async () => {
@@ -23,9 +24,21 @@ describe("Recipe API Integration Tests", () => {
             password: "testpass123",
         });
         accessToken = res.body.accessToken;
+
+        // Create a test recipe for comment tests
+        const recipeRes = await request(app)
+            .post("/api/recipes")
+            .set("Authorization", `Bearer ${accessToken}`)
+            .send({
+                title: "Test Recipe for Comments",
+                instructions: "Test instructions for comment test",
+                category: "Meat",
+            });
+        testRecipeId = recipeRes.body.recipe._id;
     });
 
     afterAll(async () => {
+        await Recipe.deleteMany({ title: "Test Recipe for Comments" });
         await User.deleteMany({ email: "recipe_test@test.com" });
         await mongoose.disconnect();
     });
@@ -33,7 +46,7 @@ describe("Recipe API Integration Tests", () => {
     describe("POST /api/recipes/:recipeId/comments", () => {
         it("should create a new comment successfully", async () => {
             const res = await request(app)
-                .post(`/api/recipes/${dummyRecipeId}/comments`)
+                .post(`/api/recipes/${testRecipeId}/comments`)
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({ content: "This is a JIT (Jest) integrated test comment!" });
 
@@ -47,14 +60,14 @@ describe("Recipe API Integration Tests", () => {
 
         it("should return 401 without a token", async () => {
             const res = await request(app)
-                .post(`/api/recipes/${dummyRecipeId}/comments`)
+                .post(`/api/recipes/${testRecipeId}/comments`)
                 .send({ content: "No token" });
             expect(res.status).toBe(401);
         });
 
         it("should return 400 if content is missing", async () => {
             const res = await request(app)
-                .post(`/api/recipes/${dummyRecipeId}/comments`)
+                .post(`/api/recipes/${testRecipeId}/comments`)
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({});
 
@@ -67,7 +80,7 @@ describe("Recipe API Integration Tests", () => {
         it("should toggle like (add and then remove)", async () => {
             // First call: Add like
             const addRes = await request(app)
-                .post(`/api/recipes/${dummyRecipeId}/likes`)
+                .post(`/api/recipes/${testRecipeId}/likes`)
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({});
 
@@ -76,7 +89,7 @@ describe("Recipe API Integration Tests", () => {
 
             // Second call: Remove like
             const removeRes = await request(app)
-                .post(`/api/recipes/${dummyRecipeId}/likes`)
+                .post(`/api/recipes/${testRecipeId}/likes`)
                 .set("Authorization", `Bearer ${accessToken}`)
                 .send({});
 
@@ -86,7 +99,7 @@ describe("Recipe API Integration Tests", () => {
 
         it("should return 401 without a token", async () => {
             const res = await request(app)
-                .post(`/api/recipes/${dummyRecipeId}/likes`)
+                .post(`/api/recipes/${testRecipeId}/likes`)
                 .send({});
             expect(res.status).toBe(401);
         });
