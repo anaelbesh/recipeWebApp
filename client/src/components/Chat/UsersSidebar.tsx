@@ -38,7 +38,6 @@ export function UsersSidebar({
           </div>
           <div className={styles.currentUserInfo}>
             <div className={styles.currentUserName}>{currentUser.name}</div>
-            <div className={styles.currentUserStatus}>Online</div>
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import type {
   RecipeListResponse,
   AiSearchResponse,
   CreateRecipePayload,
+  RecipeComment,
 } from '../types/recipe';
 
 export type UpdateRecipePayload = Partial<CreateRecipePayload>;
@@ -88,6 +89,21 @@ export const recipesApi = {
 
   deleteRecipe: async (id: string): Promise<void> => {
     await apiClient.delete(`/recipes/${id}`);
+  },
+
+  toggleLike: async (recipeId: string): Promise<{ liked: boolean; message: string }> => {
+    const { data } = await apiClient.post(`/recipes/${recipeId}/likes`);
+    return data;
+  },
+
+  getComments: async (recipeId: string): Promise<RecipeComment[]> => {
+    const { data } = await apiClient.get<RecipeComment[]>(`/recipes/${recipeId}/comments`);
+    return data;
+  },
+
+  addComment: async (recipeId: string, content: string): Promise<RecipeComment> => {
+    const { data } = await apiClient.post<RecipeComment>(`/recipes/${recipeId}/comments`, { content });
+    return data;
   },
 
   aiSearchRecipes: async (params: {

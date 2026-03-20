@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { recipesApi } from '../api/recipes';
-import type { Recipe } from '../types/recipe';
+import type { Recipe, RecipeComment } from '../types/recipe';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Skeleton } from '../components/ui/Skeleton';
+import { RecipeComments } from '../components/recipe/RecipeComments';
 import styles from './RecipeDetailsPage.module.css';
 
 /**
@@ -32,13 +33,20 @@ export function RecipeDetailsPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLowResImage, setIsLowResImage] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [comments, setComments] = useState<RecipeComment[]>([]);
+  const [isLiking, setIsLiking] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    recipesApi
-      .getRecipeById(id)
-      .then(setRecipe)
+    Promise.all([
+      recipesApi.getRecipeById(id),
+      recipesApi.getComments(id),
+    ])
+      .then(([recipeData, commentData]) => {
+        setRecipe(recipeData);
+        setComments(commentData);
+      })
       .catch((err: unknown) => {
         const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 404) setError('Recipe not found.');
@@ -59,6 +67,34 @@ export function RecipeDetailsPage() {
       return () => document.removeEventListener('keydown', handleEsc);
     }
   }, [lightboxOpen]);
+
+  const handleLikeToggle = async () => {
+    if (!user || !recipe || isLiking) return;
+    setIsLiking(true);
+    try {
+      const response = await recipesApi.toggleLike(recipe._id);
+      setRecipe((prev) => {
+        if (!prev) return prev;
+        const likeCount = prev.likeCount ?? 0;
+        return {
+          ...prev,
+          likedByMe: response.liked,
+          likeCount: response.liked ? likeCount + 1 : Math.max(0, likeCount - 1),
+        };
+      });
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleCommentAdded = (comment: RecipeComment) => {
+    setComments((prev) => [comment, ...prev]);
+    setRecipe((prev) => {
+      if (!prev) return prev;
+      const commentCount = prev.commentCount ?? 0;
+      return { ...prev, commentCount: commentCount + 1 };
+    });
+  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -107,6 +143,9 @@ export function RecipeDetailsPage() {
   const isOwner = checkOwner(user?.id, recipe.createdBy);
   const creatorName =
     typeof recipe.createdBy === 'object' ? recipe.createdBy.username : '';
+
+  const likeCount = recipe.likeCount ?? 0;
+  const commentCount = recipe.commentCount ?? comments.length;
 
   const handleBackClick = () => {
     const cameFromRecipes = location.state?.from === 'recipes';
@@ -177,6 +216,20 @@ export function RecipeDetailsPage() {
                   <span aria-label="Recipe creator">by</span> {creatorName}
                 </p>
               )}
+              <div className={styles.statsRow}>
+                <button
+                  type="button"
+                  className={`${styles.likeButton} ${recipe.likedByMe ? styles.liked : ''}`}
+                  onClick={handleLikeToggle}
+                  aria-pressed={recipe.likedByMe}
+                  aria-label={recipe.likedByMe ? 'Unlike recipe' : 'Like recipe'}
+                >
+                  ❤ <span className={styles.likeCount}>{likeCount}</span>
+                </button>
+                <div className={styles.commentCount}>
+                  💬 <span>{commentCount}</span>
+                </div>
+              </div>
             </div>
 
             {recipe.ingredients.length > 0 && (
@@ -195,6 +248,14 @@ export function RecipeDetailsPage() {
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Instructions</h2>
               <p className={styles.instructions}>{recipe.instructions}</p>
+            </section>
+
+            <section className={styles.section}>
+              <RecipeComments
+                recipeId={recipe._id}
+                comments={comments}
+                onCommentAdded={handleCommentAdded}
+              />
             </section>
 
             {/* Owner actions */}

@@ -63,6 +63,58 @@
   line-height: 1.5;
 }
 
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.likeButton {
+  border: none;
+  background: #f3f4f6;
+  color: #111827;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.likeButton:hover {
+  transform: scale(1.04);
+}
+
+.liked {
+  background: #fee2e2;
+  color: #b91c1c;
+  animation: like-pop 0.35s ease;
+}
+
+.commentCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.statCount {
+  font-weight: 700;
+}
+
+@keyframes like-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
 .ingredients {
   margin: 0;
   font-size: 0.78rem;

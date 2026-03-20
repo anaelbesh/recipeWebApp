@@ -7,10 +7,9 @@ import styles from './RecipeCard.module.css';
 
 interface RecipeCardProps {
   recipe: Recipe;
-  /** Called after a successful delete so the parent can remove the card */
   onDeleted?: (id: string) => void;
-  /** Optional handler when the card is activated */
   onSelect?: (id: string) => void;
+  onLike?: (id: string) => void;
 }
 
 function checkOwner(userId: string | undefined, createdBy: Recipe['createdBy']): boolean {
@@ -20,7 +19,7 @@ function checkOwner(userId: string | undefined, createdBy: Recipe['createdBy']):
   return String(ownerId) === String(userId);
 }
 
-export function RecipeCard({ recipe, onDeleted, onSelect }: RecipeCardProps) {
+export function RecipeCard({ recipe, onDeleted, onSelect, onLike }: RecipeCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isOwner = checkOwner(user?.id, recipe.createdBy);
@@ -29,12 +28,20 @@ export function RecipeCard({ recipe, onDeleted, onSelect }: RecipeCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  const likeCount = recipe.likeCount ?? 0;
+  const commentCount = recipe.commentCount ?? 0;
+
   const creator =
     typeof recipe.createdBy === 'object' ? recipe.createdBy.username : '';
   const snippet =
     recipe.instructions.length > 130
       ? recipe.instructions.slice(0, 130) + '…'
       : recipe.instructions;
+
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onLike?.(recipe._id);
+  };
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -89,6 +96,20 @@ export function RecipeCard({ recipe, onDeleted, onSelect }: RecipeCardProps) {
           <h3 className={styles.title}>{recipe.title}</h3>
           {recipe.category && <span className={styles.category}>{recipe.category}</span>}
           <p className={styles.snippet}>{snippet}</p>
+          <div className={styles.statsRow}>
+            <button
+              type="button"
+              className={`${styles.likeButton} ${recipe.likedByMe ? styles.liked : ''}`}
+              onClick={handleLikeClick}
+              aria-pressed={recipe.likedByMe}
+              aria-label={recipe.likedByMe ? 'Unlike recipe' : 'Like recipe'}
+            >
+              ❤ <span className={styles.statCount}>{likeCount}</span>
+            </button>
+            <div className={styles.commentCount}>
+              💬 <span className={styles.statCount}>{commentCount}</span>
+            </div>
+          </div>
           {recipe.ingredients.length > 0 && (
             <p className={styles.ingredients}>
               {recipe.ingredients.slice(0, 4).join(', ')}

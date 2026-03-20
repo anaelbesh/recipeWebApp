@@ -50,6 +50,26 @@ export function RecipesPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
 
+  const handleLikeToggle = async (recipeId: string) => {
+    if (!user) return;
+    try {
+      const response = await recipesApi.toggleLike(recipeId);
+      setItems((prev) =>
+        prev.map((recipe) => {
+          if (recipe._id !== recipeId) return recipe;
+          const likeCount = recipe.likeCount ?? 0;
+          return {
+            ...recipe,
+            likedByMe: response.liked,
+            likeCount: response.liked ? likeCount + 1 : Math.max(0, likeCount - 1),
+          };
+        })
+      );
+    } catch {
+      // ignore
+    }
+  };
+
   // Refs — avoid stale closures in IntersectionObserver and async callbacks
   const loadingMoreRef    = useRef(false);
   const hasMoreRef        = useRef(true);
@@ -333,8 +353,8 @@ export function RecipesPage() {
             <RecipeCard
               key={recipe._id}
               recipe={recipe}
-              onDeleted={(id) => setItems((prev) => prev.filter((r) => r._id !== id))}
               onSelect={handleRecipeSelect}
+              onLike={handleLikeToggle}
             />
           ))}
         </div>
