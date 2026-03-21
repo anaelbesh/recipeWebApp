@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { validateEmail, validatePassword, validateUsername, normalizeEmail, normalizePassword, normalizeUsername } from '../../../shared/validation';
+import { validateEmail, validatePassword, validateUsername, normalizeEmail, normalizePassword, normalizeUsername } from '../../../src/shared/validation';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { FormError } from '../components/ui/FormError';
