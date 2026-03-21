@@ -70,7 +70,9 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           username: {
             type: "string",
             minLength: 3,
-            maxLength: 30,
+            maxLength: 50,
+            pattern: "^[a-zA-Z0-9_-]+$",
+            description: "Alphanumeric, hyphens, and underscores only",
             example: "johndoe",
           },
           email: {
@@ -80,13 +82,9 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           },
           password: {
             type: "string",
-            minLength: 6,
-            example: "securePassword123",
-          },
-          rememberMe: {
-            type: "boolean",
-            description: "Optional. If true, refresh token expires in 30 days. Defaults to false (7 days).",
-            example: true,
+            minLength: 8,
+            description: "Must contain uppercase, lowercase, digit, and special char (!@#$%^&*)",
+            example: "SecurePass123!",
           },
         },
       },
@@ -102,11 +100,6 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           password: {
             type: "string",
             example: "securePassword123",
-          },
-          rememberMe: {
-            type: "boolean",
-            description: "Optional. If true, refresh token expires in 30 days. Defaults to false (7 days).",
-            example: true,
           },
         },
       },
@@ -213,24 +206,6 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         },
       },
       // ── Recipes (Comments & Likes) ───────────────────────
-      CommentWithUser: {
-        type: "object",
-        properties: {
-          _id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
-          user: {
-            type: "object",
-            properties: {
-              _id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
-              username: { type: "string", example: "johndoe" },
-              profilePicture: { type: "string", nullable: true, example: "https://example.com/avatar.jpg" },
-            },
-          },
-          recipe: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0e" },
-          content: { type: "string", example: "Delicious recipe!" },
-          createdAt: { type: "string", format: "date-time" },
-          updatedAt: { type: "string", format: "date-time" },
-        },
-      },
       Comment: {
         type: "object",
         properties: {
@@ -268,6 +243,13 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           },
         },
       },
+      UpdateCommentRequest: {
+        type: "object",
+        required: ["content"],
+        properties: {
+          content: { type: "string", minLength: 1, example: "Updated comment here" },
+        },
+      },
       // ── Chat ─────────────────────────────────────────────
       ChatMessage: {
         type: "object",
@@ -280,7 +262,103 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           timestamp: { type: "string", format: "date-time" },
         },
       },
-      // ── Generic ──────────────────────────────────────────
+      // ── Uploads ────────────────────────────────────────────
+      UploadResponse: {
+        type: "object",
+        properties: {
+          imageUrl: { type: "string", example: "/uploads/recipe-images/abc123def456.webp" },
+        },
+      },
+      // ── AI (RAG & Search) ──────────────────────────────────
+      AISearchParseRequest: {
+        type: "object",
+        properties: {
+          query: { type: "string", example: "recipes with garlic and olive oil" },
+        },
+      },
+      AISearchParseResponse: {
+        type: "object",
+        properties: {
+          search: { type: "string", example: "(garlic OR olive oil)" },
+          categories: { type: "array", items: { type: "string" }, example: [] },
+          dietary: { type: "array", items: { type: "string" }, example: [] },
+          keywords: { type: "array", items: { type: "string" }, example: ["garlic", "olive oil"] },
+        },
+      },
+      AIChatRequest: {
+        type: "object",
+        required: ["query"],
+        properties: {
+          query: { type: "string", example: "How do I make a vegan pasta?" },
+        },
+      },
+      AIChatResponse: {
+        type: "object",
+        properties: {
+          answer: { type: "string", example: "To make a vegan pasta, use plant-based cream or oil-based sauces..." },
+          sources: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                _id: { type: "string" },
+                title: { type: "string" },
+                relevanceScore: { type: "number", example: 0.95 },
+              },
+            },
+          },
+          queryCost: { type: "string", example: "450k tokens" },
+        },
+      },
+      AIModelsResponse: {
+        type: "object",
+        properties: {
+          models: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string", example: "models/gemini-1.5-pro" },
+                displayName: { type: "string", example: "Gemini 1.5 Pro" },
+              },
+            },
+          },
+        },
+      },
+      BackfillEmbeddingsResponse: {
+        type: "object",
+        properties: {
+          message: { type: "string", example: "Embeddings generated for 5 recipes" },
+          count: { type: "integer", example: 5 },
+        },
+      },
+      RecipeCategory: {
+        type: "object",
+        properties: {
+          label: { type: "string", example: "Breakfast" },
+          value: { type: "string", example: "breakfast" },
+        },
+      },
+      CategoriesResponse: {
+        type: "object",
+        properties: {
+          categories: { type: "array", items: { $ref: "#/components/schemas/RecipeCategory" } },
+        },
+      },
+      ValidationErrorResponse: {
+        type: "object",
+        properties: {
+          message: { type: "string", example: "Validation failed" },
+          errors: {
+            type: "object",
+            example: {
+              email: "Please enter a valid email address (e.g., user@example.com)",
+              password: ["At least 8 characters", "At least 1 uppercase letter (A-Z)"],
+            },
+          },
+        },
+      },
+      // ── Generic ────────────────────────────────────────────
       MessageResponse: {
         type: "object",
         properties: {
@@ -302,7 +380,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         tags: ["Auth"],
         summary: "Register a new user",
         description:
-          "Creates a new user account. Returns access token and refresh token. If rememberMe is true, refresh token expires in 30 days (instead of default 7 days).",
+          "Creates a new user account. Password must meet strength policy: 8+ characters, uppercase, lowercase, number, special char. Returns access token and refresh token.",
         requestBody: {
           required: true,
           content: {
@@ -321,7 +399,23 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             },
           },
           "400": {
-            description: "Missing fields or user already exists",
+            description: "Validation failed – missing fields, invalid email, weak password, or user already exists",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ValidationErrorResponse" },
+                example: {
+                  message: "Validation failed",
+                  errors: {
+                    email: "Please enter a valid email address (e.g., user@example.com)",
+                    password: ["At least 8 characters", "At least 1 special character (!@#$%^&*)"],
+                    username: "Username must be at least 3 characters",
+                  },
+                },
+              },
+            },
+          },
+          "409": {
+            description: "Email or username already in use",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -344,7 +438,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         tags: ["Auth"],
         summary: "Login with email and password",
         description:
-          "Authenticates user with email + password. Returns access token and refresh token. If rememberMe is true, refresh token expires in 30 days (instead of default 7 days).",
+          "Authenticates user with email + password. Returns access token and refresh token.",
         requestBody: {
           required: true,
           content: {
@@ -363,15 +457,15 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             },
           },
           "400": {
-            description: "Email and password are required, or account uses an OAuth provider",
+            description: "Validation failed – invalid email format or missing fields",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                schema: { $ref: "#/components/schemas/ValidationErrorResponse" },
               },
             },
           },
           "401": {
-            description: "Invalid credentials",
+            description: "Invalid credentials (generic message to prevent user enumeration)",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -394,7 +488,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         tags: ["Auth"],
         summary: "Refresh access token",
         description:
-          "Send the refresh token in the request body. The old refresh token is invalidated (one-time use) and a new access + refresh token pair is returned (rotation). The rememberMe flag is preserved during rotation.",
+          "Send the refresh token in the request body. The old refresh token is invalidated (one-time use) and a new access + refresh token pair is returned (rotation).",
         requestBody: {
           required: true,
           content: {
@@ -436,7 +530,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         tags: ["Auth"],
         summary: "Logout and revoke refresh token",
         description:
-          "Deletes the refresh token from the DB, immediately invalidating it. The refresh token is sent in the request body, so this endpoint works even if the access token has expired.",
+          "Deletes the refresh token from the DB, immediately invalidating it.",
         requestBody: {
           required: true,
           content: {
@@ -635,6 +729,70 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         },
       },
     },
+    "/api/recipes/categories": {
+      get: {
+        tags: ["Recipes"],
+        summary: "Get recipe categories",
+        description: "Returns the list of all allowed recipe categories (static list).",
+        security: [],
+        responses: {
+          "200": {
+            description: "List of categories",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CategoriesResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/recipes/ai-search": {
+      get: {
+        tags: ["Recipes", "AI"],
+        summary: "Semantic search recipes via AI embeddings",
+        description: "Performs semantic/vector search using Gemini embeddings. Pass a natural language query and get recipes ranked by relevance.",
+        security: [],
+        parameters: [
+          {
+            name: "query",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            description: "Natural language search query (e.g., 'quick pasta recipes')",
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 10, maximum: 50 },
+            description: "Max results (default 10)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Search results ranked by relevance",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    results: {
+                      type: "array",
+                      items: {
+                        $ref: "#/components/schemas/Recipe",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Query parameter required", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "429": { description: "Rate limited", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+    },
     "/api/recipes/{id}": {
       get: {
         tags: ["Recipes"],
@@ -690,41 +848,6 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
       },
     },
     "/api/recipes/{recipeId}/comments": {
-      get: {
-        tags: ["Recipes"],
-        summary: "Get all comments for a recipe",
-        description: "Returns a list of all comments for a specific recipe, with user information populated.",
-        parameters: [
-          {
-            name: "recipeId",
-            in: "path",
-            required: true,
-            schema: { type: "string" },
-            description: "The recipe's MongoDB ObjectId",
-          },
-        ],
-        responses: {
-          "200": {
-            description: "A list of comments",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "array",
-                  items: { $ref: "#/components/schemas/CommentWithUser" },
-                },
-              },
-            },
-          },
-          "500": {
-            description: "Internal server error",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-        },
-      },
       post: {
         tags: ["Recipes"],
         summary: "Add a comment to a recipe",
@@ -751,7 +874,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             description: "Comment created",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/CommentWithUser" },
+                schema: { $ref: "#/components/schemas/Comment" },
               },
             },
           },
@@ -818,12 +941,11 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         },
       },
     },
-    // ═══════════════════  COMMENTS  ════════════════════════
     "/api/comments/{commentId}": {
       put: {
         tags: ["Comments"],
         summary: "Update a comment",
-        description: "Updates a comment's content. Only the comment owner can perform this action.",
+        description: "Updates the content of a comment. Only the comment author can update.",
         security: [{ BearerAuth: [] }],
         parameters: [
           {
@@ -831,48 +953,36 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             in: "path",
             required: true,
             schema: { type: "string" },
-            description: "The comment's MongoDB ObjectId",
+            description: "MongoDB ObjectId of the comment",
           },
         ],
         requestBody: {
           required: true,
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/AddCommentRequest" },
+              schema: { $ref: "#/components/schemas/UpdateCommentRequest" },
             },
           },
         },
         responses: {
           "200": {
-            description: "Comment updated successfully",
+            description: "Comment updated",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/CommentWithUser" },
+                schema: { $ref: "#/components/schemas/Comment" },
               },
             },
           },
-          "400": {
-            description: "Comment content is required",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
-          },
-          "401": {
-            description: "Unauthorized – missing or invalid token",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
-          },
-          "403": {
-            description: "Forbidden – you are not the owner of this comment",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
-          },
-          "404": {
-            description: "Comment not found",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
-          },
+          "400": { description: "Content is required", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "403": { description: "Forbidden – not the comment author", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "Comment not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
       delete: {
         tags: ["Comments"],
         summary: "Delete a comment",
-        description: "Deletes a comment. Only the comment owner can perform this action.",
+        description: "Permanently deletes a comment. Only the comment author can delete.",
         security: [{ BearerAuth: [] }],
         parameters: [
           {
@@ -880,26 +990,21 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             in: "path",
             required: true,
             schema: { type: "string" },
-            description: "The comment's MongoDB ObjectId",
+            description: "MongoDB ObjectId of the comment",
           },
         ],
         responses: {
           "200": {
-            description: "Comment deleted successfully",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/MessageResponse" } } },
+            description: "Comment deleted",
+            content: {
+              "application/json": {
+                schema: { type: "object", properties: { message: { type: "string", example: "Comment deleted" } } },
+              },
+            },
           },
-          "401": {
-            description: "Unauthorized – missing or invalid token",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
-          },
-          "403": {
-            description: "Forbidden – you are not the owner of this comment",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
-          },
-          "404": {
-            description: "Comment not found",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
-          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "403": { description: "Forbidden – not the comment author", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "Comment not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
     },
@@ -1105,6 +1210,145 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               },
             },
           },
+        },
+      },
+    },
+    // ═══════════════════  UPLOADS  ════════════════════════
+    "/api/uploads/recipe-image": {
+      post: {
+        tags: ["Uploads"],
+        summary: "Upload recipe image",
+        description: "Accepts a multipart/form-data file upload (jpg, png, webp). Returns the URL where the image is stored.",
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                required: ["image"],
+                properties: {
+                  image: {
+                    type: "string",
+                    format: "binary",
+                    description: "Image file (jpg, png, webp; max 5 MB)",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Image uploaded successfully",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UploadResponse" },
+              },
+            },
+          },
+          "400": { description: "No file uploaded or invalid file type", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "413": { description: "File too large (max 5 MB)", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+    },
+    // ═══════════════════  AI – MODELS  ═════════════════════
+    "/api/ai/models": {
+      get: {
+        tags: ["AI"],
+        summary: "List available AI models",
+        description: "Returns the list of Gemini models available for the API key. Used for debugging/configuration.",
+        security: [],
+        responses: {
+          "200": {
+            description: "List of available models",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AIModelsResponse" },
+              },
+            },
+          },
+          "500": { description: "Failed to fetch models from Gemini API", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+    },
+    // ═══════════════════  AI – SEARCH PARSE  ══════════════
+    "/api/ai/search/parse": {
+      post: {
+        tags: ["AI"],
+        summary: "Parse free-text query into structured search",
+        description: "Uses AI to parse natural language into structured search terms (keywords, filters, etc.). Rate limited.",
+        security: [],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/AISearchParseRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Parsed search structure",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AISearchParseResponse" },
+              },
+            },
+          },
+          "400": { description: "Query is required", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "429": { description: "Rate limited", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+    },
+    // ═══════════════════  AI – RAG CHAT  ═══════════════════
+    "/api/ai/chat": {
+      post: {
+        tags: ["AI"],
+        summary: "RAG chat – ask questions about recipes",
+        description: "Uses Retrieval-Augmented Generation (RAG) to answer questions grounded in your recipe database. Returns answer + source recipes.",
+        security: [],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/AIChatRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "RAG response with answer and sources",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AIChatResponse" },
+              },
+            },
+          },
+          "400": { description: "Query is required", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "503": { description: "Gemini API unavailable or rate limited", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+    },
+    // ═══════════════════  AI – BACKFILL  ═══════════════════
+    "/api/ai/backfill-embeddings": {
+      post: {
+        tags: ["AI"],
+        summary: "Generate embeddings for recipes missing them",
+        description: "Admin-only endpoint. Generates Gemini embeddings for all recipes that don't have them yet (supports semantic search).",
+        security: [{ BearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Embeddings generated successfully",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/BackfillEmbeddingsResponse" },
+              },
+            },
+          },
+          "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "500": { description: "Failed to generate embeddings", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
     },

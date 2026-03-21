@@ -6,7 +6,7 @@ import {
   normalizeEmail,
   normalizePassword,
   normalizeUsername,
-} from '../../shared/validation';
+} from '../shared/validation';
 
 export interface ValidatedAuthRequest extends Request {
   validated?: {
