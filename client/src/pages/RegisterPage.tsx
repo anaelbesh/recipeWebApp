@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { validateEmail, validatePassword, validateUsername, normalizeEmail, normalizePassword, normalizeUsername } from '../../../shared/validation';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { FormError } from '../components/ui/FormError';
@@ -17,19 +18,40 @@ export function RegisterPage() {
   const [errors, setErrors] = useState<{
     username?: string;
     email?: string;
-    password?: string;
+    password?: string | string[];
   }>({});
   const [formError, setFormError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!username || username.length < 3)
-      e.username = 'Username must be at least 3 characters';
-    if (!email) e.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Invalid email';
-    if (!password || password.length < 6)
-      e.password = 'Password must be at least 6 characters';
+    
+    // Validate username
+    const usernameValidation = validateUsername(username);
+    if (!usernameValidation.valid) {
+      e.username = usernameValidation.error;
+    }
+    
+    // Validate email
+    if (!email) {
+      e.email = 'Email is required';
+    } else {
+      const emailValidation = validateEmail(email);
+      if (!emailValidation.valid) {
+        e.email = emailValidation.error;
+      }
+    }
+    
+    // Validate password
+    if (!password) {
+      e.password = 'Password is required';
+    } else {
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.valid) {
+        e.password = passwordValidation.errors; // Array of requirement errors
+      }
+    }
+    
     return e;
   };
 
@@ -43,17 +65,23 @@ export function RegisterPage() {
     setErrors({});
     setIsLoading(true);
     try {
-      await register({ username, email, password });
+      await register({
+        username: normalizeUsername(username),
+        email: normalizeEmail(email),
+        password: normalizePassword(password),
+      });
       navigate('/profile');
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? 'Registration failed. Please try again.';
+      const response = err as { response?: { data?: { message?: string; errors?: Record<string, string> } } };
+      const msg = response?.response?.data?.message ?? 'Registration failed. Please try again.';
       setFormError(msg);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Get password validation result for real-time feedback
+  const passwordValidation = password ? validatePassword(password) : null;
 
   return (
     <div className={styles.container}>
@@ -67,8 +95,11 @@ export function RegisterPage() {
             id="username"
             label="Username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            error={errors.username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setFormError(''); // Clear form error when user edits
+            }}
+            error={errors.username ? (typeof errors.username === 'string' ? errors.username : undefined) : undefined}
             placeholder="chef_master"
           />
           <Input
@@ -76,20 +107,66 @@ export function RegisterPage() {
             label="Email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={errors.email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setFormError(''); // Clear form error when user edits
+            }}
+            error={errors.email ? (typeof errors.email === 'string' ? errors.email : undefined) : undefined}
             placeholder="you@example.com"
           />
-          <Input
-            id="password"
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
-            placeholder="Min. 6 characters"
-          />
-          <Button type="submit" isLoading={isLoading}>
+          <div>
+            <Input
+              id="password"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setFormError(''); // Clear form error when user edits
+              }}
+              error={
+                errors.password
+                  ? typeof errors.password === 'string'
+                    ? errors.password
+                    : errors.password[0]
+                  : undefined
+              }
+              placeholder="Enter strong password"
+            />
+            {/* Password strength indicators */}
+            {password && passwordValidation && (
+              <div style={{
+                marginTop: '8px',
+                padding: '8px',
+                backgroundColor: '#f9fafb',
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: '#666',
+              }}>
+                <p style={{ marginBottom: '6px', fontWeight: '600', color: '#333' }}>
+                  Password requirements:
+                </p>
+                <ul style={{ margin: '0', paddingLeft: '16px' }}>
+                  <li style={{ color: passwordValidation.requirements.minLength ? '#10b981' : '#ef4444' }}>
+                    ✓ At least 8 characters
+                  </li>
+                  <li style={{ color: passwordValidation.requirements.hasUppercase ? '#10b981' : '#ef4444' }}>
+                    ✓ At least 1 uppercase letter (A-Z)
+                  </li>
+                  <li style={{ color: passwordValidation.requirements.hasLowercase ? '#10b981' : '#ef4444' }}>
+                    ✓ At least 1 lowercase letter (a-z)
+                  </li>
+                  <li style={{ color: passwordValidation.requirements.hasNumber ? '#10b981' : '#ef4444' }}>
+                    ✓ At least 1 number (0-9)
+                  </li>
+                  <li style={{ color: passwordValidation.requirements.hasSpecialChar ? '#10b981' : '#ef4444' }}>
+                    ✓ At least 1 special character (!@#$%^&*)
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+          <Button type="submit" isLoading={isLoading} disabled={isLoading}>
             Create account
           </Button>
         </form>

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/userModel';
 import RefreshToken from '../models/refreshTokenModel';
 import { authConfig } from '../config/auth';
+import { ValidatedAuthRequest } from '../middleware/validationMiddleware';
 // import { AuthRequest } from '../middleware/authMiddleware'; // needed when userController is added
 
 // Helper function to generate tokens
@@ -19,23 +20,30 @@ const generateTokens = (userId: string, username: string, email: string): { acce
 };
 
 // Register new user
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: ValidatedAuthRequest, res: Response) => {
   try {
-    const { username, email, password, rememberMe } = req.body;
+    const { rememberMe } = req.body;
+    
+    // Use validated and normalized values from middleware
+    const username = req.validated?.username;
+    const email = req.validated?.email;
+    const password = req.validated?.password;
 
+    // Validation middleware should have already validated these, but be defensive
     if (!username || !email || !password) {
-        return res.status(400).json({ message: 'All fields are required' });
+        return res.status(400).json({ message: 'Validation failed' });
     }
 
+    // Check for existing user (use normalized email for consistency)
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(409).json({ message: 'Email or username already in use' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       username,
-      email,
+      email, // Already normalized (lowercase, trimmed)
       password: hashedPassword,
       provider: 'local',
     });
@@ -64,17 +72,23 @@ export const register = async (req: Request, res: Response) => {
 };
 
 // Login user
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: ValidatedAuthRequest, res: Response) => {
   try {
-    const { email, password, rememberMe } = req.body;
+    const { rememberMe } = req.body;
+    
+    // Use validated and normalized values from middleware
+    const email = req.validated?.email;
+    const password = req.validated?.password;
 
+    // Validation middleware should have already validated these, but be defensive
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+      return res.status(400).json({ message: 'Validation failed' });
     }
 
+    // Use normalized email (lowercase) for query
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     if (user.provider !== 'local') {
@@ -85,7 +99,7 @@ export const login = async (req: Request, res: Response) => {
 
     const isValidPassword = await bcrypt.compare(password, user.password!);
     if (!isValidPassword) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.username, user.email);
