@@ -9,7 +9,6 @@ export interface RecipeComment {
   };
   createdAt: string;
 }
-
 export interface Recipe {
   _id: string;
   title: string;
@@ -26,9 +25,8 @@ export interface Recipe {
   createdAt: string;
   updatedAt: string;
   score?: number; // AI search relevance score (0–1)
-  commentCount?: number;
-  likeCount?: number;
-  likedByMe?: boolean;
+  likeCount?: number; // Number of likes on this recipe
+  likedByMe?: boolean; // Whether current user has liked this recipe
 }
 
 export interface RecipeListResponse {
