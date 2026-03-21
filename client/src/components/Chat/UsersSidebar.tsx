@@ -33,9 +33,13 @@ export function UsersSidebar({
       <div className={styles.header}>
         <h3 className={styles.headerTitle}>Logged in as</h3>
         <div className={styles.currentUser}>
-          <div className={styles.currentUserAvatar}>
-            {getInitials(currentUser.name)}
-          </div>
+          {currentUser.profilePicture ? (
+            <img src={currentUser.profilePicture} alt={currentUser.name} className={styles.currentUserAvatarImg} />
+          ) : (
+            <div className={styles.currentUserAvatar}>
+              {getInitials(currentUser.name)}
+            </div>
+          )}
           <div className={styles.currentUserInfo}>
             <div className={styles.currentUserName}>{currentUser.name}</div>
           </div>
@@ -61,9 +65,13 @@ export function UsersSidebar({
             className={`${styles.userItem} ${selectedPartner?._id === user._id ? styles.active : ''}`}
             onClick={() => onSelectPartner(user)}
           >
-            <div className={styles.userItemAvatar}>
-              {getInitials(user.name)}
-            </div>
+            {user.profilePicture ? (
+              <img src={user.profilePicture} alt={user.name} className={styles.userItemAvatarImg} />
+            ) : (
+              <div className={styles.userItemAvatar}>
+                {getInitials(user.name)}
+              </div>
+            )}
             <div className={styles.userItemInfo}>
               <div className={styles.userItemName}>{user.name}</div>
               <div className={styles.userItemEmail}>{user.email}</div>

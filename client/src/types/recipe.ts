@@ -25,8 +25,9 @@ export interface Recipe {
   createdAt: string;
   updatedAt: string;
   score?: number; // AI search relevance score (0–1)
-  likeCount?: number; // Number of likes on this recipe
-  likedByMe?: boolean; // Whether current user has liked this recipe
+  commentCount?: number;
+  likeCount?: number;
+  likedByMe?: boolean;
 }
 
 export interface RecipeListResponse {

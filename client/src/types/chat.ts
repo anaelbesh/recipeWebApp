@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   online?: boolean;
+  profilePicture?: string;
 }
 
 export interface Message {
@@ -24,4 +25,3 @@ export interface MessageAck {
 export interface ReadAck {
   messageId: string;
 }
-
