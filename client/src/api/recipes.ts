@@ -21,6 +21,9 @@ export interface GetRecipesParams {
 }
 
 export interface GetMyRecipesParams {
+  /** Cursor for cursor-based pagination (preferred for infinite scroll). */
+  cursor?: string;
+  /** Legacy page number — used for paginated requests. */
   page?: number;
   limit?: number;
   sort?: string;
@@ -48,6 +51,7 @@ export const recipesApi = {
   /**
    * Fetch recipes created by the currently authenticated user.
    * Uses GET /api/recipes?mine=true — the backend filters by req.user.id from the JWT.
+   * Supports both cursor-based (preferred) and page-based pagination.
    * The apiClient interceptor automatically attaches the Authorization: Bearer <token> header.
    */
   getMyRecipes: async (
@@ -56,9 +60,10 @@ export const recipesApi = {
     const cleanParams: Record<string, string | number | boolean> = {
       mine: true,
     };
-    if (params.page !== undefined) cleanParams.page = params.page;
-    if (params.limit !== undefined) cleanParams.limit = params.limit;
-    if (params.sort) cleanParams.sort = params.sort;
+    if (params.cursor)                  cleanParams.cursor = params.cursor;
+    else if (params.page !== undefined) cleanParams.page   = params.page;
+    if (params.limit !== undefined)     cleanParams.limit  = params.limit;
+    if (params.sort)                    cleanParams.sort   = params.sort;
 
     const { data } = await apiClient.get<RecipeListResponse>('/recipes', {
       params: cleanParams,

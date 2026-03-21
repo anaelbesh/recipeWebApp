@@ -113,6 +113,13 @@ export const listRecipes = async (query: RecipeListQuery) => {
   const hasMore = rawItems.length > limit;
   const items   = hasMore ? rawItems.slice(0, limit) : rawItems;
 
+  // ── Debug logging for 'mine=true' queries ──────────────────────────────────
+  if (query.mine && query.userId) {
+    console.log(
+      `[recipeService] User ${query.userId} | Fetched recipes: ${items.length} | Total available: ${total} | Limit: ${limit} | Has more: ${hasMore}`,
+    );
+  }
+
   // ── Build nextCursor from the last item in this page ───────────────────────
   // Only meaningful for non-search queries (cursor pagination requires stable order).
   let nextCursor: string | null = null;
