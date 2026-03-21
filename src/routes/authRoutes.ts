@@ -7,12 +7,13 @@ import {
   facebookCallback,
 } from '../controllers/oauthController';
 import { verifyToken } from '../middleware/authMiddleware';
+import { validateLoginRequest, validateSignupRequest } from '../middleware/validationMiddleware';
 
 const router = Router();
 
 // Local auth
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', validateSignupRequest, register);
+router.post('/login', validateLoginRequest, login);
 router.post('/logout', logout);
 router.post('/refresh', refreshToken);
 

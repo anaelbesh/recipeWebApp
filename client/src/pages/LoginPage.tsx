@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { validateEmail, normalizeEmail } from '../../../shared/validation';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { FormError } from '../components/ui/FormError';
@@ -22,9 +23,20 @@ export function LoginPage() {
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!email) e.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Invalid email';
-    if (!password) e.password = 'Password is required';
+    
+    if (!email) {
+      e.email = 'Email is required';
+    } else {
+      const emailValidation = validateEmail(email);
+      if (!emailValidation.valid) {
+        e.email = emailValidation.error;
+      }
+    }
+    
+    if (!password) {
+      e.password = 'Password is required';
+    }
+    
     return e;
   };
 
@@ -36,16 +48,13 @@ export function LoginPage() {
       return;
     }
     setErrors({});
-    // Do NOT clear formError here — it would flash away during the API call.
-    // It is cleared when the user edits a field (see onChange handlers below).
     setIsLoading(true);
     try {
-      await login({ email, password, rememberMe });
+      await login({ email: normalizeEmail(email), password, rememberMe });
       navigate('/profile');
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? 'Login failed. Please try again.';
+      const response = err as { response?: { data?: { message?: string; errors?: Record<string, string> } } };
+      const msg = response?.response?.data?.message ?? 'Login failed. Please try again.';
       setFormError(msg);
     } finally {
       setIsLoading(false);
@@ -65,7 +74,10 @@ export function LoginPage() {
             label="Email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setFormError(''); // Clear form error when user edits
+            }}
             error={errors.email}
             placeholder="you@example.com"
           />
@@ -74,7 +86,10 @@ export function LoginPage() {
             label="Password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setFormError(''); // Clear form error when user edits
+            }}
             error={errors.password}
             placeholder="••••••••"
           />
@@ -90,7 +105,7 @@ export function LoginPage() {
               Remember me
             </label>
           </div>
-          <Button type="submit" isLoading={isLoading}>
+          <Button type="submit" isLoading={isLoading} disabled={isLoading}>
             Sign in
           </Button>
         </form>
