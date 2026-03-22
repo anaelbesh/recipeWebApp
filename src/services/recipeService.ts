@@ -195,6 +195,7 @@ export const updateRecipe = async (id: string, input: RecipeUpdateInput) => {
   }
 
   await recipe.save(); // runs schema validators
+  await recipe.populate('createdBy', 'username profilePicture');
 
   // Trigger embedding async — best-effort, never blocks the response
   const savedRecipe = recipe;
