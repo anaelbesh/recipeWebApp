@@ -15,4 +15,22 @@ module.exports = {
     moduleFileExtensions: ['ts', 'js', 'json', 'node'],
     // Increase timeout for DB operations
     testTimeout: 30000,
+    // Coverage configuration
+    collectCoverageFrom: [
+        'src/**/*.ts',
+        '!src/server.ts',
+        '!src/db.ts',
+        '!src/index.ts',
+        '!src/**/*.d.ts',
+        '!src/config/**',
+        '!src/sockets/**', // Socket.io logic covered by integration tests
+    ],
+    coverageThreshold: {
+        global: {
+            lines: 70,
+            functions: 70,
+            branches: 65,
+            statements: 70,
+        },
+    },
 };

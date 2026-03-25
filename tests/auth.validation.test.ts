@@ -4,6 +4,9 @@ import mongoose from 'mongoose';
 import { app } from '../src/server'; // Adjust path as needed
 import User from '../src/models/userModel';
 
+// Generate unique test ID for this test run to avoid conflicts
+const testId = Date.now();
+
 describe('Auth Endpoints - Input Validation', () => {
   beforeAll(async () => {
     // Connect to test database if needed
@@ -14,7 +17,7 @@ describe('Auth Endpoints - Input Validation', () => {
 
   afterAll(async () => {
     // Clean up test data
-    await User.deleteMany({ email: { $regex: '^test-validation' } });
+    await User.deleteMany({ email: { $regex: '^test-validation|^test-email-normalize|^login-test' } });
     // Don't disconnect to allow test runner to manage connections
   });
 
@@ -48,10 +51,10 @@ describe('Auth Endpoints - Input Validation', () => {
     });
 
     it('should normalize email to lowercase for login', async () => {
-      // First, create a user with lowercase email
+      // First, create a user with lowercase email using unique username
       await User.create({
-        username: 'test-normalize',
-        email: 'login-test@example.com',
+        username: `test-normalize-${testId}`,
+        email: `login-test-${testId}@example.com`,
         password: 'HashedPass123!',
         provider: 'local',
       });
@@ -60,7 +63,7 @@ describe('Auth Endpoints - Input Validation', () => {
       const response = await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'LOGIN-TEST@EXAMPLE.COM',
+          email: `LOGIN-TEST-${testId}@EXAMPLE.COM`,
           password: 'ValidPass123!',
         });
 
@@ -103,7 +106,7 @@ describe('Auth Endpoints - Input Validation', () => {
         .post('/api/auth/register')
         .send({
           username: 'ab',
-          email: 'test-validation-002@example.com',
+          email: `test-validation-002-${testId}@example.com`,
           password: 'ValidPass123!',
         });
 
@@ -115,7 +118,7 @@ describe('Auth Endpoints - Input Validation', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'testuser',
+          username: `testuser-${testId}`,
           email: 'not-an-email',
           password: 'ValidPass123!',
         });
@@ -128,8 +131,8 @@ describe('Auth Endpoints - Input Validation', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'testuser',
-          email: 'test-validation-003@example.com',
+          username: `testuser-003-${testId}`,
+          email: `test-validation-003-${testId}@example.com`,
           password: 'Pass1!',
         });
 
@@ -142,8 +145,8 @@ describe('Auth Endpoints - Input Validation', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'testuser',
-          email: 'test-validation-004@example.com',
+          username: `testuser-004-${testId}`,
+          email: `test-validation-004-${testId}@example.com`,
           password: 'weakpass123!',
         });
 
@@ -155,8 +158,8 @@ describe('Auth Endpoints - Input Validation', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'testuser',
-          email: 'test-validation-005@example.com',
+          username: `testuser-005-${testId}`,
+          email: `test-validation-005-${testId}@example.com`,
           password: 'STRONGPASS123!',
         });
 
@@ -168,8 +171,8 @@ describe('Auth Endpoints - Input Validation', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'testuser',
-          email: 'test-validation-006@example.com',
+          username: `testuser-006-${testId}`,
+          email: `test-validation-006-${testId}@example.com`,
           password: 'StrongPass!',
         });
 
@@ -181,8 +184,8 @@ describe('Auth Endpoints - Input Validation', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'testuser',
-          email: 'test-validation-007@example.com',
+          username: `testuser-007-${testId}`,
+          email: `test-validation-007-${testId}@example.com`,
           password: 'StrongPass123',
         });
 
@@ -212,13 +215,13 @@ describe('Auth Endpoints - Input Validation', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'test-valid-user',
-          email: 'test-validation-valid@example.com',
+          username: `test-valid-user-${testId}`,
+          email: `test-validation-valid-${testId}@example.com`,
           password: 'ValidPass123!',
         });
 
       expect(response.status).toBe(201);
-      expect(response.body.user.email).toBe('test-validation-valid@example.com');
+      expect(response.body.user.email).toBe(`test-validation-valid-${testId}@example.com`);
       expect(response.body.accessToken).toBeDefined();
       expect(response.body.refreshToken).toBeDefined();
     });
@@ -227,23 +230,24 @@ describe('Auth Endpoints - Input Validation', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'test-email-normalize',
-          email: 'TEST-VALIDATION-NORMALIZE@EXAMPLE.COM',
+          username: `test-email-normalize-${testId}`,
+          email: `TEST-VALIDATION-NORMALIZE-${testId}@EXAMPLE.COM`,
           password: 'ValidPass123!',
         });
 
       expect(response.status).toBe(201);
-      expect(response.body.user.email).toBe('test-validation-normalize@example.com');
+      expect(response.body.user.email).toBe(`test-validation-normalize-${testId}@example.com`.toLowerCase());
     });
 
     it('should reject duplicate email (case-insensitive)', async () => {
-      const email = 'test-validation-duplicate-001@example.com';
+      const uniqueId = `${testId}-${Date.now()}`;
+      const email = `test-validation-duplicate-${uniqueId}@example.com`;
 
       // First registration
       const response1 = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'user1',
+          username: `user1-${uniqueId}`,
           email,
           password: 'ValidPass123!',
         });
@@ -254,7 +258,7 @@ describe('Auth Endpoints - Input Validation', () => {
       const response2 = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'user2',
+          username: `user2-${uniqueId}`,
           email: email.toUpperCase(),
           password: 'ValidPass123!',
         });
@@ -268,7 +272,7 @@ describe('Auth Endpoints - Input Validation', () => {
         .post('/api/auth/register')
         .send({
           username: 'user@name',
-          email: 'test-validation-008@example.com',
+          email: `test-validation-008-${testId}@example.com`,
           password: 'ValidPass123!',
         });
 

@@ -21,7 +21,7 @@ describe("Recipe API Integration Tests", () => {
         const res = await request(app).post("/api/auth/register").send({
             email: "recipe_test@test.com",
             username: "recipe_testuser",
-            password: "testpass123",
+            password: "RecipeTest123!",
         });
         accessToken = res.body.accessToken;
 

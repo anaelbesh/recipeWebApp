@@ -24,7 +24,7 @@ describe("Like API Integration Tests", () => {
         const res = await request(app).post("/api/auth/register").send({
             email: "like_test@test.com",
             username: "like_testuser",
-            password: "testpass123",
+            password: "LikeTest123!",
         });
         accessToken = res.body.accessToken;
         const user = await User.findOne({ email: "like_test@test.com" });
