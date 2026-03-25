@@ -111,6 +111,15 @@ export const recipesApi = {
     return data;
   },
 
+  updateComment: async (commentId: string, content: string): Promise<RecipeComment> => {
+    const { data } = await apiClient.put<RecipeComment>(`/comments/${commentId}`, { content });
+    return data;
+  },
+
+  deleteComment: async (commentId: string): Promise<void> => {
+    await apiClient.delete(`/comments/${commentId}`);
+  },
+
   aiSearchRecipes: async (params: {
     q: string;
     category?: string;

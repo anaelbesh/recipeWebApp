@@ -90,7 +90,11 @@ export function ChatWindow({
       </div>
 
       <div className={styles.header}>
-        <div className={styles.avatar}>{getInitials(partner.name)}</div>
+        {partner.profilePicture ? (
+          <img src={partner.profilePicture} alt={partner.name} className={styles.avatarImg} />
+        ) : (
+          <div className={styles.avatar}>{getInitials(partner.name)}</div>
+        )}
         <div className={styles.headerInfo}>
           <h2>{partner.name}</h2>
         </div>
@@ -130,4 +134,3 @@ export function ChatWindow({
     </div>
   );
 }
-
