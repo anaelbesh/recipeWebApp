@@ -101,6 +101,21 @@ export function RecipeDetailsPage() {
     });
   };
 
+  const handleCommentUpdated = (updatedComment: RecipeComment) => {
+    setComments((prev) =>
+      prev.map((c) => (c._id === updatedComment._id ? updatedComment : c))
+    );
+  };
+
+  const handleCommentDeleted = (commentId: string) => {
+    setComments((prev) => prev.filter((c) => c._id !== commentId));
+    setRecipe((prev) => {
+      if (!prev) return prev;
+      const commentCount = prev.commentCount ?? 0;
+      return { ...prev, commentCount: Math.max(0, commentCount - 1) };
+    });
+  };
+
   const handleDelete = async () => {
     if (!id) return;
     setIsDeleting(true);
@@ -264,6 +279,8 @@ export function RecipeDetailsPage() {
                 recipeId={recipe._id}
                 comments={comments}
                 onCommentAdded={handleCommentAdded}
+                onCommentUpdated={handleCommentUpdated}
+                onCommentDeleted={handleCommentDeleted}
               />
             </section>
 

@@ -10,14 +10,20 @@ interface RecipeCommentsProps {
   recipeId: string;
   comments: RecipeComment[];
   onCommentAdded: (comment: RecipeComment) => void;
+  onCommentUpdated?: (comment: RecipeComment) => void;
+  onCommentDeleted?: (commentId: string) => void;
 }
 
-export function RecipeComments({ recipeId, comments, onCommentAdded }: RecipeCommentsProps) {
+export function RecipeComments({ recipeId, comments, onCommentAdded, onCommentUpdated, onCommentDeleted }: RecipeCommentsProps) {
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [isEditingSubmitting, setIsEditingSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +39,32 @@ export function RecipeComments({ recipeId, comments, onCommentAdded }: RecipeCom
       setError('Failed to add comment.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent, commentId: string) => {
+    e.preventDefault();
+    if (!editContent.trim()) return;
+    setIsEditingSubmitting(true);
+    try {
+      const updated = await recipesApi.updateComment(commentId, editContent.trim());
+      onCommentUpdated?.(updated);
+      setEditingId(null);
+      setEditContent('');
+    } catch {
+      alert('Failed to update comment.');
+    } finally {
+      setIsEditingSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+    try {
+      await recipesApi.deleteComment(commentId);
+      onCommentDeleted?.(commentId);
+    } catch {
+      alert('Failed to delete comment.');
     }
   };
 
@@ -108,15 +140,56 @@ export function RecipeComments({ recipeId, comments, onCommentAdded }: RecipeCom
                 )}
                 <span className={styles.username}>{comment.user.username}</span>
               </div>
-              <span className={styles.date}>
-                {new Date(comment.createdAt).toLocaleDateString()}
-              </span>
+              <div className={styles.headerRight}>
+                <span className={styles.date}>
+                  {new Date(comment.createdAt).toLocaleDateString()}
+                </span>
+                {user?.id === comment.user._id && (
+                  <div className={styles.commentActions}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingId(comment._id);
+                        setEditContent(comment.content);
+                      }}
+                      className={styles.iconBtn}
+                      aria-label="Edit comment"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(comment._id)}
+                      className={styles.iconBtn}
+                      aria-label="Delete comment"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-            <p className={styles.commentBody}>{comment.content}</p>
+            {editingId === comment._id ? (
+              <form onSubmit={(e) => handleEditSubmit(e, comment._id)} className={styles.editForm}>
+                <textarea
+                  className={styles.textarea}
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  rows={2}
+                />
+                <div className={styles.actions}>
+                  <button type="button" onClick={() => setEditingId(null)} className={styles.cancelBtn}>Cancel</button>
+                  <button type="submit" className={styles.submitButton} disabled={isEditingSubmitting || !editContent.trim()}>
+                    {isEditingSubmitting ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <p className={styles.commentBody}>{comment.content}</p>
+            )}
           </div>
         ))}
       </div>
     </div>
   );
 }
-
