@@ -21,13 +21,14 @@ export interface Recipe {
   dishType?: string;
   createdBy:
     | { _id: string; username: string; profilePicture?: string }
-    | string;
+    | string
+    | null;
   createdAt: string;
   updatedAt: string;
   score?: number; // AI search relevance score (0–1)
-  commentCount?: number;
-  likeCount?: number;
-  likedByMe?: boolean;
+  likeCount?: number; // Number of likes on this recipe
+  commentCount?: number; // Number of comments on this recipe
+  likedByMe?: boolean; // Whether current user has liked this recipe
 }
 
 export interface RecipeListResponse {

@@ -190,6 +190,17 @@ export function RecipesPage() {
     }
   }, [searchTerm, category]);
 
+  useEffect(() => {
+    if (loadingInitial || loadingMore || !hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const rect = sentinel.getBoundingClientRect();
+    if (rect.top <= window.innerHeight + 200) {
+      void loadMore();
+    }
+  }, [items.length, loadingInitial, loadingMore, hasMore, loadMore]);
+
   const maybeRestoreScroll = useCallback(async () => {
     const restore = restoreStateRef.current;
     if (!restore || restoredRef.current || loadingInitial) return;
@@ -283,7 +294,13 @@ export function RecipesPage() {
             type="text"
             className={styles.searchInput}
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setSearchInput(next);
+              if (!next.trim() && searchTerm) {
+                updateParams('', categoryInput);
+              }
+            }}
             placeholder="Search recipes…"
             aria-label="Search recipes"
           />
@@ -373,6 +390,14 @@ export function RecipesPage() {
               <p className={styles.errorText}>{loadMoreError}</p>
               <Button variant="secondary" onClick={loadMore}>
                 Retry
+              </Button>
+            </div>
+          )}
+
+          {hasMore && !loadingMore && !loadMoreError && items.length > 0 && (
+            <div className={styles.loadMoreButtonRow}>
+              <Button variant="secondary" onClick={() => void loadMore()}>
+                Load more
               </Button>
             </div>
           )}
