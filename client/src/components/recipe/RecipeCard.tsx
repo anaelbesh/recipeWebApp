@@ -14,8 +14,13 @@ interface RecipeCardProps {
 
 function checkOwner(userId: string | undefined, createdBy: Recipe['createdBy']): boolean {
   if (!userId) return false;
+  if (!createdBy) return false;
   const ownerId =
-    typeof createdBy === 'string' ? createdBy : String((createdBy as { _id: unknown })._id);
+    typeof createdBy === 'string'
+      ? createdBy
+      : '_id' in createdBy
+        ? String(createdBy._id)
+        : '';
   return String(ownerId) === String(userId);
 }
 
@@ -32,7 +37,11 @@ export function RecipeCard({ recipe, onDeleted, onSelect, onLike }: RecipeCardPr
   const commentCount = recipe.commentCount ?? 0;
 
   const creator =
-    typeof recipe.createdBy === 'object' ? recipe.createdBy.username : '';
+    recipe.createdBy &&
+    typeof recipe.createdBy === 'object' &&
+    'username' in recipe.createdBy
+      ? recipe.createdBy.username
+      : '';
   const snippet =
     recipe.instructions.length > 130
       ? recipe.instructions.slice(0, 130) + '…'

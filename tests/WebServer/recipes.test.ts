@@ -269,6 +269,9 @@ describe("Recipe CRUD API", () => {
       expect(res.status).toBe(200);
       expect(res.body.recipe.title).toBe("Test Recipe Pancakes Updated");
       expect(res.body.recipe.ingredients).toContain("butter");
+      expect(res.body.recipe.createdBy).toBeTruthy();
+      expect(typeof res.body.recipe.createdBy).toBe("object");
+      expect(res.body.recipe.createdBy.username).toBe(OWNER.username);
     });
 
     it("should return 400 for invalid ObjectId", async () => {

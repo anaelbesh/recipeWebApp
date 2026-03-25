@@ -213,6 +213,12 @@
   text-align: center;
 }
 
+.loadMoreButtonRow {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
 .sentinel {
   height: 1px;
 }

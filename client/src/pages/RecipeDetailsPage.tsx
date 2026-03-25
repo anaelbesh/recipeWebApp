@@ -14,8 +14,13 @@ import styles from './RecipeDetailsPage.module.css';
  */
 function checkOwner(userId: string | undefined, createdBy: Recipe['createdBy']): boolean {
   if (!userId) return false;
+  if (!createdBy) return false;
   const ownerId =
-    typeof createdBy === 'string' ? createdBy : String((createdBy as { _id: unknown })._id);
+    typeof createdBy === 'string'
+      ? createdBy
+      : '_id' in createdBy
+        ? String(createdBy._id)
+        : '';
   return String(ownerId) === String(userId);
 }
 
@@ -142,7 +147,11 @@ export function RecipeDetailsPage() {
 
   const isOwner = checkOwner(user?.id, recipe.createdBy);
   const creatorName =
-    typeof recipe.createdBy === 'object' ? recipe.createdBy.username : '';
+    recipe.createdBy &&
+    typeof recipe.createdBy === 'object' &&
+    'username' in recipe.createdBy
+      ? recipe.createdBy.username
+      : '';
 
   const likeCount = recipe.likeCount ?? 0;
   const commentCount = recipe.commentCount ?? comments.length;
