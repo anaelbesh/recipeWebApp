@@ -6,7 +6,7 @@ import {
   validateUsername,
   normalizeUsername,
   PASSWORD_MIN_LENGTH,
-} from '../shared/validation';
+} from '../src/shared/validation';
 
 describe('Email Validation', () => {
   describe('validateEmail', () => {
@@ -54,10 +54,10 @@ describe('Email Validation', () => {
     });
 
     it('should reject email exceeding 254 characters', () => {
-      const longEmail = 'a'.repeat(250) + '@b.c';
+      const longEmail = 'a'.repeat(251) + '@b.c';
       const result = validateEmail(longEmail);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain('less than 254 characters');
+      expect(result.error).toContain('less than 254');
     });
   });
 
@@ -111,7 +111,7 @@ describe('Password Validation', () => {
     it('should require special character', () => {
       const result = validatePassword('StrongPass123');
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('At least 1 special character');
+      expect(result.errors).toContain('At least 1 special character (!@#$%^&*)');
     });
 
     it('should detect all missing requirements', () => {

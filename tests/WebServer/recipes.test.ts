@@ -10,12 +10,12 @@ import { connectMongo } from "../../src/db";
 const OWNER = {
   email: "recipe_owner@test.com",
   username: "recipe_owner",
-  password: "ownerpass123",
+  password: "OwnerPass123!",
 };
 const OTHER = {
   email: "recipe_other@test.com",
   username: "recipe_other",
-  password: "otherpass123",
+  password: "OtherPass123!",
 };
 
 let ownerToken: string;

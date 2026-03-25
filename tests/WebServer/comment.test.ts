@@ -24,7 +24,7 @@ describe("Comment API Integration Tests", () => {
         const res = await request(app).post("/api/auth/register").send({
             email: "comment_test@test.com",
             username: "comment_testuser",
-            password: "testpass123",
+            password: "CommentTest123!",
         });
         accessToken = res.body.accessToken;
         const user = await User.findOne({ email: "comment_test@test.com" });
@@ -107,7 +107,7 @@ describe("Comment API Integration Tests", () => {
             const anotherUserRes = await request(app).post("/api/auth/register").send({
                 email: "another_user@test.com",
                 username: "anotheruser",
-                password: "testpass123",
+                password: "CommentTest123!",
             });
             const anotherToken = anotherUserRes.body.accessToken;
 

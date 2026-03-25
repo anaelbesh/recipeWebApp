@@ -35,7 +35,7 @@ describe("Test Auth Suite", () => {
   test("Register without required fields", async () => {
     const response = await request(app).post("/api/auth/register").send({ email: "test@test.com" });
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('All fields are required');
+    expect(response.body.message).toBe('Validation failed');
   });
 
   test("Test Registration", async () => {
@@ -57,8 +57,8 @@ describe("Test Auth Suite", () => {
     const response = await request(app).post("/api/auth/register").send(
       { email, username, password }
     );
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('User already exists');
+    expect(response.status).toBe(409);
+    expect(response.body.message).toContain('already in use');
   });
 
   test("Test Login", async () => {
@@ -76,30 +76,30 @@ describe("Test Auth Suite", () => {
 
   test("Login with incorrect password", async () => {
     const response = await request(app).post("/api/auth/login")
-      .send({ email: userData.email, password: "wrongpassword" });
+      .send({ email: userData.email, password: "WrongPassword123!" });
     expect(response.status).toBe(401);
-    expect(response.body.message).toBe('Invalid credentials');
+    expect(response.body.message).toContain('Invalid email or password');
   });
 
   test("Login with non-existent user", async () => {
     const response = await request(app).post("/api/auth/login")
-      .send({ email: "nonexistent@test.com", password: "password" });
+      .send({ email: "nonexistent@test.com", password: "NoUser123!" });
     expect(response.status).toBe(401);
-    expect(response.body.message).toBe('Invalid credentials');
+    expect(response.body.message).toContain('Invalid email or password');
   });
 
   test("Login without email", async () => {
     const response = await request(app).post("/api/auth/login")
-      .send({ password: "password" });
+      .send({ password: "NoEmail123!" });
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Email and password are required');
+    expect(response.body.message).toContain('Validation');
   });
 
   test("Login without password", async () => {
     const response = await request(app).post("/api/auth/login")
       .send({ email: "test@test.com" });
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Email and password are required');
+    expect(response.body.message).toContain('Validation');
   });
 
   test("Test Refresh Token", async () => {
@@ -118,7 +118,7 @@ describe("Test Auth Suite", () => {
     const freshUser = {
       email: `doubletest${randomId}@test.com`,
       username: `doubletest${randomId}`,
-      password: "testpass"
+      password: "TestPass123!"
     };
     
     const registerResponse = await request(app).post("/api/auth/register").send(freshUser);
@@ -184,7 +184,7 @@ describe("Test Auth Suite", () => {
 
     const response = await request(app).post("/api/auth/login").send({
       email: oauthUser.email,
-      password: "anypassword",
+      password: "AnyPassword123!",
     });
 
     expect(response.status).toBe(400);
@@ -196,7 +196,7 @@ describe("Test Auth Suite", () => {
     const rememberMeUser = {
       email: `rememberme${Date.now()}@test.com`,
       username: `rememberme${Date.now()}`,
-      password: "testpass123",
+      password: "TestPass123!",
     };
 
     // First register the user
@@ -221,7 +221,7 @@ describe("Test Auth Suite", () => {
     const defaultUser = {
       email: `defaultlogin${Date.now()}@test.com`,
       username: `defaultlogin${Date.now()}`,
-      password: "testpass123",
+      password: "TestPass123!",
     };
 
     // Register the user
@@ -243,7 +243,7 @@ describe("Test Auth Suite", () => {
     const regRememberMeUser = {
       email: `registerrememberme${Date.now()}@test.com`,
       username: `registerrememberme${Date.now()}`,
-      password: "testpass123",
+      password: "TestPass123!",
       rememberMe: true,
     };
 
@@ -263,7 +263,7 @@ describe("Test Auth Suite", () => {
     const rememberMeUser = {
       email: `refreshrememberme${Date.now()}@test.com`,
       username: `refreshrememberme${Date.now()}`,
-      password: "testpass123",
+      password: "TestPass123!",
     };
 
     // Register with rememberMe
@@ -293,7 +293,7 @@ describe("Test Auth Suite", () => {
     const expiredUser = {
       email: `expiredtoken${Date.now()}@test.com`,
       username: `expiredtoken${Date.now()}`,
-      password: "testpass123",
+      password: "TestPass123!",
     };
 
     const registerResponse = await request(app).post("/api/auth/register").send(expiredUser);
@@ -434,7 +434,7 @@ describe("Test OAuth Suite", () => {
     const existingUser = await User.create({
       username: "mergetest",
       email: "mergetest@test.com",
-      password: "hashedpassword",
+      password: "HashedPassword123!",
       provider: "local",
     });
 
@@ -489,7 +489,7 @@ describe("Test OAuth Suite", () => {
     const regResponse = await request(app).post("/api/auth/register").send({
       username: "providercheckuser",
       email: "providercheck@test.com",
-      password: "testpass123",
+      password: "TestPass123!",
     });
     expect(regResponse.status).toBe(201);
 

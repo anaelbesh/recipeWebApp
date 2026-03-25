@@ -13,7 +13,7 @@ export type UserData = {
 export const userData: UserData = {
     email: "test@test.com",
     username: "testuser",
-    password: "testpass",
+    password: "TestPass123!",
     _id: "",
     accessToken: "",
     refreshToken: ""

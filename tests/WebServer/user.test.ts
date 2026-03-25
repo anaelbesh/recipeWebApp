@@ -18,13 +18,13 @@ let userId: string;
 const testUser = {
   email: "usercontroller_test@test.com",
   username: "userctrl_test",
-  password: "testpass123",
+  password: "TestPass123!",
 };
 
 const secondUser = {
   email: "usercontroller_second@test.com",
   username: "userctrl_second",
-  password: "testpass456",
+  password: "TestPass456!",
 };
 
 beforeAll(async () => {
@@ -224,7 +224,7 @@ describe("DELETE /api/users/:id", () => {
     const throwaway = {
       email: "throwaway_user@test.com",
       username: "throwaway_user",
-      password: "throwaway123",
+      password: "ThrowAway123!",
     };
     const regRes = await request(app).post("/api/auth/register").send(throwaway);
     const throwawayId = regRes.body.user.id;
