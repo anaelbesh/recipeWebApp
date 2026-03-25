@@ -23,6 +23,7 @@ export function ChatPage() {
         _id: authUser.id,
         name: authUser.username,
         email: authUser.email,
+        profilePicture: authUser.profilePicture,
     };
 
     const [allUsers, setAllUsers] = useState<User[]>([]);

@@ -1,10 +1,13 @@
 .appContainer {
   display: flex;
-  gap: 20px;
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  max-width: 900px;
-  height: 85vh;
-  max-height: 700px;
+  height: 100%;
+  max-height: 90vh; /* Responsive max height */
+  gap: 20px; /* Restore gap for spacing */
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
