@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { recipesApi } from '../api/recipes';
 import type { Recipe, RecipeComment } from '../types/recipe';
@@ -40,6 +40,7 @@ export function RecipeDetailsPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [comments, setComments] = useState<RecipeComment[]>([]);
   const [isLiking, setIsLiking] = useState(false);
+  const deleteInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!id) return;
@@ -118,6 +119,8 @@ export function RecipeDetailsPage() {
 
   const handleDelete = async () => {
     if (!id) return;
+    if (deleteInFlightRef.current) return;
+    deleteInFlightRef.current = true;
     setIsDeleting(true);
     setDeleteError('');
     try {
@@ -127,10 +130,11 @@ export function RecipeDetailsPage() {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 401) setDeleteError('Please log in to delete this recipe.');
       else if (status === 403) setDeleteError('You can only delete your own recipes.');
-      else if (status === 404) setDeleteError('Recipe not found — it may already be deleted.');
+      else if (status === 404) navigate('/recipes', { replace: true });
       else setDeleteError('Failed to delete recipe. Please try again.');
       setShowConfirm(false);
     } finally {
+      deleteInFlightRef.current = false;
       setIsDeleting(false);
     }
   };

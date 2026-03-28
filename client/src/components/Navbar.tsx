@@ -49,9 +49,6 @@ export function Navbar() {
           <NavLink to={ROUTES.ADD_RECIPE} className={navLinkClass}>
             Add Recipe
           </NavLink>
-          <NavLink to={ROUTES.FAVORITES} className={navLinkClass}>
-            Favorites
-          </NavLink>
           <NavLink to={ROUTES.CHAT} className={navLinkClass}>
             Chat
           </NavLink>
@@ -139,9 +136,6 @@ export function Navbar() {
         </NavLink>
         <NavLink to={ROUTES.ADD_RECIPE} className={navLinkClass} onClick={closeMenu}>
           Add Recipe
-        </NavLink>
-        <NavLink to={ROUTES.FAVORITES} className={navLinkClass} onClick={closeMenu}>
-          Favorites
         </NavLink>
         <NavLink to={ROUTES.CHAT} className={navLinkClass} onClick={closeMenu}>
           Chat
