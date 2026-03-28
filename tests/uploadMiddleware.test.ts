@@ -42,7 +42,7 @@ describe('upload middleware factory', () => {
 
     destination({}, {}, cb);
 
-    const expectedDest = path.join('data', 'uploads', 'recipe-images');
+    const expectedDest = path.resolve('data', 'uploads', 'recipe-images');
     expect(mkdirSpy).toHaveBeenCalledWith(expectedDest, { recursive: true });
     expect(cb).toHaveBeenCalledWith(null, expectedDest);
 

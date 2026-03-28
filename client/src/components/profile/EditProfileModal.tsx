@@ -44,8 +44,13 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
       const updated = await usersApi.updateProfile(form);
       setUser({ ...user, ...updated, email: user.email });
       onClose();
-    } catch {
-      setError('Failed to update profile. Please try again.');
+    } catch (err: unknown) {
+      const errorMsg = (err as { response?: { data?: { message?: string; error?: string } } })
+        ?.response?.data?.message
+        || (err as { response?: { data?: { message?: string; error?: string } } })
+          ?.response?.data?.error
+        || 'Failed to update profile. Please try again.';
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }

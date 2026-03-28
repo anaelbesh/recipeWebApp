@@ -145,9 +145,6 @@ export const recipesApi = {
     const { data } = await apiClient.post<{ imageUrl: string }>(
       '/uploads/recipe-image',
       formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }
     );
     return data;
   },

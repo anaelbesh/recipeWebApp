@@ -10,10 +10,7 @@ import apiClient from './client';
  */
 export const usersApi = {
   updateProfile: async (form: FormData): Promise<User> => {
-    const { data } = await apiClient.put<{ user: User }>('/users/me', form, {
-      // Let the browser set Content-Type with the correct multipart boundary
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await apiClient.put<{ user: User }>('/users/me', form);
     return data.user;
   },
 };

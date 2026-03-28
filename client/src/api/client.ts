@@ -23,7 +23,6 @@ export const tokenStorage = {
 
 const apiClient = axios.create({
   baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
 });
 
 // ── Request interceptor: attach access token ──────────────────────────
