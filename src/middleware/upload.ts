@@ -2,6 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { Request } from 'express';
+import { getUploadsSubdirPath } from '../utils/uploads';
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string };
@@ -19,7 +20,7 @@ const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
  * They are served at:  /uploads/<subfolder>/<filename>
  */
 export function createUpload(subfolder: string) {
-  const dest = path.join('data', 'uploads', subfolder);
+  const dest = getUploadsSubdirPath(subfolder);
 
   const storage = multer.diskStorage({
     destination: (_req, _file, cb) => {

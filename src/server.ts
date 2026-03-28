@@ -14,6 +14,7 @@ import aiRoutes from "./routes/aiRoutes";
 import uploadRoutes from "./routes/uploadRoutes";
 import commentRoutes from "./routes/commentRoutes";
 import { setupSwagger } from "./config/swagger";
+import { ensureUploadsDirExists, getUploadsRootDir } from "./utils/uploads";
 
 export const app = express();
 
@@ -45,7 +46,8 @@ function prerequisites() {
     app.use(express.static(clientDistPath));
 
     // Serve uploaded files (avatars, recipe images, etc.)
-    app.use("/uploads", express.static(path.resolve("data", "uploads")));
+    ensureUploadsDirExists();
+    app.use("/uploads", express.static(getUploadsRootDir()));
 }
 
 function initializeRoutes(app: express.Application) {

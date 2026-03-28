@@ -5,6 +5,13 @@ import RefreshToken from '../models/refreshTokenModel';
 import { Comment } from '../models/Comment';
 import { AuthRequest } from '../middleware/authMiddleware';
 
+function getAvatarFileName(file: Express.Multer.File): string {
+  if (file.filename) return file.filename;
+  const normalizedPath = file.path?.replace(/\\/g, '/') ?? '';
+  const fromPath = normalizedPath.split('/').filter(Boolean).pop();
+  return fromPath ?? 'unknown-avatar.jpg';
+}
+
 export const getMe = async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.user!.id).select('-password');
@@ -59,8 +66,8 @@ export const updateMe = async (req: AuthRequest, res: Response) => {
 
     if (req.file) {
       const origin = process.env.SERVER_ORIGIN ?? 'http://localhost:4000';
-      const relativePath = req.file.path.replace(/\\/g, '/').replace(/^data\//, '');
-      updateData.profilePicture = `${origin}/${relativePath}`;
+      const avatarPath = `uploads/avatars/${getAvatarFileName(req.file)}`;
+      updateData.profilePicture = `${origin}/${avatarPath}`;
     }
 
     if (Object.keys(updateData).length === 0) {
