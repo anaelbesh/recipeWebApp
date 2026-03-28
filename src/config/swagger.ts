@@ -156,6 +156,10 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             nullable: true,
             example: "https://example.com/pancakes.jpg",
           },
+          category: { type: "string", example: "Breakfast" },
+          kosherType: { type: "string", enum: ["Meat", "Dairy", "Parve"], example: "Parve" },
+          cookingMethod: { type: "string", enum: ["Grill", "Oven", "Pan", "NoCook", "Boil", "Fry"], example: "Pan" },
+          dishType: { type: "string", enum: ["Main", "Side", "Dessert", "Snack", "Spread"], example: "Main" },
           createdBy: {
             type: "object",
             properties: {
@@ -164,13 +168,16 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               profilePicture: { type: "string", nullable: true },
             },
           },
+          commentCount: { type: "integer", example: 3 },
+          likeCount: { type: "integer", example: 12 },
+          likedByMe: { type: "boolean", example: false },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },
       },
       RecipeCreateRequest: {
         type: "object",
-        required: ["title", "instructions"],
+        required: ["title", "instructions", "category"],
         properties: {
           title: { type: "string", minLength: 3, maxLength: 120, example: "Classic Pancakes" },
           instructions: { type: "string", minLength: 10, maxLength: 20000, example: "Mix flour, eggs and milk. Fry on medium heat until golden." },
@@ -180,6 +187,10 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             example: ["flour", "eggs", "milk"],
           },
           imageUrl: { type: "string", example: "https://example.com/pancakes.jpg" },
+          category: { $ref: "#/components/schemas/RecipeCategory" },
+          kosherType: { type: "string", enum: ["Meat", "Dairy", "Parve"], example: "Parve" },
+          cookingMethod: { type: "string", enum: ["Grill", "Oven", "Pan", "NoCook", "Boil", "Fry"], example: "Pan" },
+          dishType: { type: "string", enum: ["Main", "Side", "Dessert", "Snack", "Spread"], example: "Main" },
         },
       },
       RecipeUpdateRequest: {
@@ -193,6 +204,10 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             example: ["flour", "eggs", "milk", "butter"],
           },
           imageUrl: { type: "string", example: "https://example.com/new-image.jpg" },
+          category: { $ref: "#/components/schemas/RecipeCategory" },
+          kosherType: { type: "string", enum: ["Meat", "Dairy", "Parve"], example: "Parve" },
+          cookingMethod: { type: "string", enum: ["Grill", "Oven", "Pan", "NoCook", "Boil", "Fry"], example: "Pan" },
+          dishType: { type: "string", enum: ["Main", "Side", "Dessert", "Snack", "Spread"], example: "Main" },
         },
       },
       RecipeListResponse: {
@@ -210,7 +225,14 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         type: "object",
         properties: {
           _id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
-          user: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
+          user: {
+            type: "object",
+            properties: {
+              _id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
+              username: { type: "string", example: "johndoe" },
+              profilePicture: { type: "string", nullable: true },
+            },
+          },
           recipe: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0e" },
           content: { type: "string", example: "Delicious recipe!" },
           createdAt: { type: "string", format: "date-time" },
@@ -272,42 +294,71 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
       // ── AI (RAG & Search) ──────────────────────────────────
       AISearchParseRequest: {
         type: "object",
+        required: ["query"],
         properties: {
           query: { type: "string", example: "recipes with garlic and olive oil" },
+          locale: { type: "string", enum: ["en-US", "he-IL"], example: "en-US" },
+          maxResults: { type: "integer", minimum: 1, maximum: 50, example: 10 },
         },
       },
       AISearchParseResponse: {
         type: "object",
         properties: {
-          search: { type: "string", example: "(garlic OR olive oil)" },
-          categories: { type: "array", items: { type: "string" }, example: [] },
-          dietary: { type: "array", items: { type: "string" }, example: [] },
-          keywords: { type: "array", items: { type: "string" }, example: ["garlic", "olive oil"] },
+          requestId: { type: "string", example: "req_m9x8k2ab" },
+          normalizedQuery: { type: "string", example: "garlic olive oil" },
+          filters: { type: "object", additionalProperties: true },
+          warnings: { type: "array", items: { type: "string" }, example: [] },
+          confidence: { type: "number", example: 0.93 },
+        },
+      },
+      AIChatHistoryMessage: {
+        type: "object",
+        required: ["role", "content"],
+        properties: {
+          role: { type: "string", enum: ["user", "assistant"], example: "user" },
+          content: { type: "string", example: "What can I cook with lentils?" },
+        },
+      },
+      AIRagSource: {
+        type: "object",
+        properties: {
+          recipeId: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
+          title: { type: "string", example: "Lentil Soup" },
+          category: { type: "string", example: "Parve" },
+          imageUrl: { type: "string", nullable: true, example: "https://example.com/lentil.jpg" },
+          snippet: { type: "string", example: "...cook lentils with onion, carrots and celery..." },
+          score: { type: "number", nullable: true, example: 0.91 },
+          reason: { type: "string", nullable: true, example: "High semantic similarity" },
         },
       },
       AIChatRequest: {
         type: "object",
-        required: ["query"],
+        required: ["message"],
         properties: {
-          query: { type: "string", example: "How do I make a vegan pasta?" },
+          message: { type: "string", example: "How do I make a vegan pasta?" },
+          locale: { type: "string", enum: ["en-US", "he-IL"], example: "en-US" },
+          category: { type: "string", example: "Parve" },
+          history: {
+            type: "array",
+            items: { $ref: "#/components/schemas/AIChatHistoryMessage" },
+          },
         },
       },
       AIChatResponse: {
         type: "object",
         properties: {
+          requestId: { type: "string", example: "req_m9x8k2ab" },
           answer: { type: "string", example: "To make a vegan pasta, use plant-based cream or oil-based sauces..." },
           sources: {
             type: "array",
-            items: {
-              type: "object",
-              properties: {
-                _id: { type: "string" },
-                title: { type: "string" },
-                relevanceScore: { type: "number", example: 0.95 },
-              },
-            },
+            items: { $ref: "#/components/schemas/AIRagSource" },
           },
-          queryCost: { type: "string", example: "450k tokens" },
+          secondarySources: {
+            type: "array",
+            items: { $ref: "#/components/schemas/AIRagSource" },
+          },
+          followUpQuestion: { type: "string", nullable: true, example: "Do you prefer quick or slow-cooked dishes?" },
+          fallback: { type: "string", nullable: true, example: "keyword" },
         },
       },
       AIModelsResponse: {
@@ -328,15 +379,50 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
       BackfillEmbeddingsResponse: {
         type: "object",
         properties: {
-          message: { type: "string", example: "Embeddings generated for 5 recipes" },
-          count: { type: "integer", example: 5 },
+          message: { type: "string", example: "All recipes already have embeddings." },
+          updated: { type: "integer", example: 0 },
         },
       },
       RecipeCategory: {
+        type: "string",
+        enum: [
+          "Meat",
+          "Dairy",
+          "Parve",
+          "Desserts",
+          "Pastries / Baked Goods",
+          "Bread",
+          "Salads",
+          "Asian",
+          "Sandwiches / Wraps",
+          "Comfort Food",
+          "Healthy / Light",
+          "Sauces & Spreads",
+          "Breakfast",
+          "Gluten-Free",
+          "Other",
+        ],
+        example: "Breakfast",
+      },
+      UserListItem: {
         type: "object",
         properties: {
-          label: { type: "string", example: "Breakfast" },
-          value: { type: "string", example: "breakfast" },
+          _id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
+          name: { type: "string", example: "johndoe" },
+          email: { type: "string", example: "john@example.com" },
+          profilePicture: { type: "string", nullable: true, example: "https://lh3.googleusercontent.com/a/photo.jpg" },
+        },
+      },
+      UserDocumentResponse: {
+        type: "object",
+        properties: {
+          _id: { type: "string", example: "665f1a2b3c4d5e6f7a8b9c0d" },
+          username: { type: "string", example: "johndoe" },
+          email: { type: "string", example: "john@example.com" },
+          provider: { type: "string", enum: ["local", "google", "facebook"], example: "local" },
+          profilePicture: { type: "string", nullable: true, example: "https://lh3.googleusercontent.com/a/photo.jpg" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
         },
       },
       CategoriesResponse: {
@@ -369,6 +455,10 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         type: "object",
         properties: {
           message: { type: "string" },
+          error: { type: "string" },
+          reason: { type: "string" },
+          hint: { type: "string" },
+          errors: { type: "object", additionalProperties: true },
         },
       },
     },
@@ -516,6 +606,14 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           },
           "403": {
             description: "Invalid or expired refresh token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -695,9 +793,12 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         security: [],
         parameters: [
           { name: "search", in: "query", required: false, schema: { type: "string" }, description: "Full-text search across title, instructions and ingredients" },
+          { name: "q", in: "query", required: false, schema: { type: "string" }, description: "Alias of search" },
           { name: "page",   in: "query", required: false, schema: { type: "integer", default: 1 }, description: "Page number (1-based)" },
           { name: "limit",  in: "query", required: false, schema: { type: "integer", default: 10, maximum: 50 }, description: "Results per page (max 50)" },
           { name: "sort",   in: "query", required: false, schema: { type: "string", default: "-createdAt" }, description: "Sort field, prefix with - for descending (e.g. -createdAt, title)" },
+          { name: "category", in: "query", required: false, schema: { $ref: "#/components/schemas/RecipeCategory" }, description: "Filter by recipe category" },
+          { name: "cursor", in: "query", required: false, schema: { type: "string" }, description: "Cursor token for cursor-based pagination" },
           { name: "mine",   in: "query", required: false, schema: { type: "boolean" }, description: "If true, return only the authenticated user's recipes (requires Bearer token)" },
         ],
         responses: {
@@ -755,11 +856,18 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         security: [],
         parameters: [
           {
-            name: "query",
+            name: "q",
             in: "query",
             required: true,
             schema: { type: "string" },
             description: "Natural language search query (e.g., 'quick pasta recipes')",
+          },
+          {
+            name: "category",
+            in: "query",
+            required: false,
+            schema: { $ref: "#/components/schemas/RecipeCategory" },
+            description: "Optional category filter",
           },
           {
             name: "limit",
@@ -777,18 +885,24 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
                 schema: {
                   type: "object",
                   properties: {
-                    results: {
+                    items: {
                       type: "array",
                       items: {
                         $ref: "#/components/schemas/Recipe",
                       },
                     },
+                    returned: { type: "integer", example: 10 },
+                    aiUsed: { type: "boolean", example: true },
+                    totalCandidates: { type: "integer", example: 132 },
+                    fallback: { type: "string", nullable: true, example: "textSearch" },
+                    message: { type: "string", nullable: true },
+                    hint: { type: "string", nullable: true },
                   },
                 },
               },
             },
           },
-          "400": { description: "Query parameter required", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "400": { description: "q parameter is required (minimum 2 characters)", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           "429": { description: "Rate limited", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
@@ -848,6 +962,41 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
       },
     },
     "/api/recipes/{recipeId}/comments": {
+      get: {
+        tags: ["Recipes"],
+        summary: "Get comments for a recipe",
+        security: [],
+        parameters: [
+          {
+            name: "recipeId",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "The recipe's MongoDB ObjectId",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Recipe comments (newest first)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/Comment" },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
       post: {
         tags: ["Recipes"],
         summary: "Add a comment to a recipe",
@@ -888,6 +1037,22 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           },
           "401": {
             description: "Unauthorized – missing or invalid token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Recipe not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -938,6 +1103,14 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               },
             },
           },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
         },
       },
     },
@@ -977,6 +1150,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           "403": { description: "Forbidden – not the comment author", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           "404": { description: "Comment not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "500": { description: "Internal server error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
       delete: {
@@ -1005,6 +1179,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           "403": { description: "Forbidden – not the comment author", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           "404": { description: "Comment not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "500": { description: "Internal server error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
     },
@@ -1022,7 +1197,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: { user: { $ref: "#/components/schemas/UserResponse" } },
+                  properties: { user: { $ref: "#/components/schemas/UserDocumentResponse" } },
                 },
               },
             },
@@ -1056,7 +1231,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: { user: { $ref: "#/components/schemas/UserResponse" } },
+                  properties: { user: { $ref: "#/components/schemas/UserDocumentResponse" } },
                 },
               },
             },
@@ -1078,10 +1253,8 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             content: {
               "application/json": {
                 schema: {
-                  type: "object",
-                  properties: {
-                    users: { type: "array", items: { $ref: "#/components/schemas/UserResponse" } },
-                  },
+                  type: "array",
+                  items: { $ref: "#/components/schemas/UserListItem" },
                 },
               },
             },
@@ -1104,7 +1277,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: { user: { $ref: "#/components/schemas/UserResponse" } },
+                  properties: { user: { $ref: "#/components/schemas/UserDocumentResponse" } },
                 },
               },
             },
@@ -1140,7 +1313,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: { user: { $ref: "#/components/schemas/UserResponse" } },
+                  properties: { user: { $ref: "#/components/schemas/UserDocumentResponse" } },
                 },
               },
             },
@@ -1249,7 +1422,6 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           },
           "400": { description: "No file uploaded or invalid file type", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           "401": { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
-          "413": { description: "File too large (max 5 MB)", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
     },
@@ -1298,7 +1470,9 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             },
           },
           "400": { description: "Query is required", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "422": { description: "Low-confidence parse", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           "429": { description: "Rate limited", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "503": { description: "AI service unavailable", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
     },
@@ -1326,7 +1500,8 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
               },
             },
           },
-          "400": { description: "Query is required", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "400": { description: "Message is required", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "429": { description: "Rate limited", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           "503": { description: "Gemini API unavailable or rate limited", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
@@ -1336,11 +1511,25 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
       post: {
         tags: ["AI"],
         summary: "Generate embeddings for recipes missing them",
-        description: "Admin-only endpoint. Generates Gemini embeddings for all recipes that don't have them yet (supports semantic search).",
+        description: "Generates Gemini embeddings for all recipes that don't have them yet (supports semantic search). Requires authentication.",
         security: [{ BearerAuth: [] }],
         responses: {
+          "202": {
+            description: "Backfill accepted and started in background",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Backfill started for 12 recipe(s). Check server logs for progress." },
+                    total: { type: "integer", example: 12 },
+                  },
+                },
+              },
+            },
+          },
           "200": {
-            description: "Embeddings generated successfully",
+            description: "No missing embeddings to backfill",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/BackfillEmbeddingsResponse" },

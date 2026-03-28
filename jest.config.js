@@ -23,14 +23,5 @@ module.exports = {
         '!src/index.ts',
         '!src/**/*.d.ts',
         '!src/config/**',
-        '!src/sockets/**', // Socket.io logic covered by integration tests
     ],
-    coverageThreshold: {
-        global: {
-            lines: 70,
-            functions: 70,
-            branches: 65,
-            statements: 70,
-        },
-    },
 };

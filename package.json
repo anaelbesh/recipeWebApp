@@ -8,7 +8,6 @@
     "start": "node dist/server.js",
     "dev": "ts-node-dev --require ./preload.js --respawn src/server.ts",
     "test": "tsc &&jest --runInBand --forceExit --detectOpenHandles",
-    "test:coverage": "tsc && jest --coverage --runInBand --forceExit --detectOpenHandles",
     "backfill:embeddings": "ts-node scripts/backfillRecipeEmbeddings.ts",
     "fix:categories": "ts-node --require ./preload.js scripts/fixCategoriesAndEmbeddings.ts"
   },

@@ -172,35 +172,30 @@ describe('aiController', () => {
       expect(res.status).toHaveBeenCalledWith(422);
     });
 
-    test('maps EmbedError quota to 429', async () => {
+    test.each([
+      {
+        kind: 'quota' as const,
+        status: 429,
+        message: 'AI rate limit reached — please try again later',
+      },
+      {
+        kind: 'auth' as const,
+        status: 502,
+        message: 'Gemini authentication error — verify GEMINI_API_KEY',
+      },
+    ])('maps EmbedError $kind to $status', async ({ kind, status, message }) => {
       const req: any = { body: { query: 'pasta' } };
       const res = createRes();
 
       jest.spyOn(aiSearchParseService, 'parseSearchQuery').mockRejectedValue(
-        new EmbedError('Quota', undefined, 'wait', 'quota'),
+        new EmbedError(kind, undefined, 'hint', kind),
       );
 
       await parseSearch(req as Request, res);
 
-      expect(res.status).toHaveBeenCalledWith(429);
+      expect(res.status).toHaveBeenCalledWith(status);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'AI rate limit reached — please try again later' }),
-      );
-    });
-
-    test('maps EmbedError auth to 502', async () => {
-      const req: any = { body: { query: 'pasta' } };
-      const res = createRes();
-
-      jest.spyOn(aiSearchParseService, 'parseSearchQuery').mockRejectedValue(
-        new EmbedError('auth', undefined, 'check key', 'auth'),
-      );
-
-      await parseSearch(req as Request, res);
-
-      expect(res.status).toHaveBeenCalledWith(502);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Gemini authentication error — verify GEMINI_API_KEY' }),
+        expect.objectContaining({ message }),
       );
     });
 
