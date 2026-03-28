@@ -14,7 +14,6 @@ import { RecipesPage } from '../pages/RecipesPage';
 import { AddRecipePage } from '../pages/AddRecipePage';
 import { RecipeDetailsPage } from '../pages/RecipeDetailsPage';
 import { EditRecipePage } from '../pages/EditRecipePage';
-import { FavoritesPage } from '../pages/FavoritesPage';
 import { AppLayout } from '../layout/AppLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { tokenStorage } from '../api/client';
@@ -87,7 +86,6 @@ function RouteTree() {
         <Route path="/recipes/new" element={<AddRecipePage />} />
         <Route path="/recipes/:id" element={<RecipeDetailsPage />} />
         <Route path="/recipes/:id/edit" element={<EditRecipePage />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
         <Route
           path="/chat"
           element={

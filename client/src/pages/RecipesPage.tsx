@@ -371,6 +371,7 @@ export function RecipesPage() {
               key={recipe._id}
               recipe={recipe}
               onSelect={handleRecipeSelect}
+              onDeleted={(id) => setItems((prev) => prev.filter((r) => r._id !== id))}
               onLike={handleLikeToggle}
             />
           ))}

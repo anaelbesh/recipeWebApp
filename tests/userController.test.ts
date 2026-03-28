@@ -120,15 +120,13 @@ describe('userController', () => {
     expect(res.json).toHaveBeenCalledWith({ message: 'No valid fields to update' });
   });
 
-  test('updateMe trims username and builds profile picture url', async () => {
+  test('updateMe trims username and stores profile picture as relative uploads path', async () => {
     const req: any = {
       user: { id: 'u1' },
       body: { username: '  newname  ' },
       file: { path: 'data\\uploads\\avatars\\u1.png' },
     };
     const res = createRes();
-
-    process.env.SERVER_ORIGIN = 'http://localhost:4000';
 
     (User.findByIdAndUpdate as jest.Mock).mockReturnValue({
       select: jest.fn().mockResolvedValue({ _id: 'u1', username: 'newname' }),
@@ -140,7 +138,7 @@ describe('userController', () => {
       'u1',
       {
         username: 'newname',
-        profilePicture: 'http://localhost:4000/uploads/avatars/u1.png',
+        profilePicture: '/uploads/avatars/u1.png',
       },
       { new: true },
     );

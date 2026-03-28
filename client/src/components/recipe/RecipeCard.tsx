@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Recipe } from '../../types/recipe';
 import { useAuth } from '../../context/AuthContext';
@@ -32,6 +32,7 @@ export function RecipeCard({ recipe, onDeleted, onSelect, onLike }: RecipeCardPr
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const deleteInFlightRef = useRef(false);
 
   const likeCount = recipe.likeCount ?? 0;
   const commentCount = recipe.commentCount ?? 0;
@@ -54,18 +55,23 @@ export function RecipeCard({ recipe, onDeleted, onSelect, onLike }: RecipeCardPr
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (deleteInFlightRef.current) return;
+    deleteInFlightRef.current = true;
     setIsDeleting(true);
     setDeleteError('');
     try {
       await recipesApi.deleteRecipe(recipe._id);
+      setShowConfirm(false);
       onDeleted?.(recipe._id);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 401) setDeleteError('Please log in.');
       else if (status === 403) setDeleteError('Not allowed.');
+      else if (status === 404) onDeleted?.(recipe._id); // already deleted on server
       else setDeleteError('Failed to delete.');
       setShowConfirm(false);
     } finally {
+      deleteInFlightRef.current = false;
       setIsDeleting(false);
     }
   };

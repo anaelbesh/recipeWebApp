@@ -65,9 +65,7 @@ export const updateMe = async (req: AuthRequest, res: Response) => {
     if (req.body.username) updateData.username = (req.body.username as string).trim();
 
     if (req.file) {
-      const origin = process.env.SERVER_ORIGIN ?? 'http://localhost:4000';
-      const avatarPath = `uploads/avatars/${getAvatarFileName(req.file)}`;
-      updateData.profilePicture = `${origin}/${avatarPath}`;
+      updateData.profilePicture = `/uploads/avatars/${getAvatarFileName(req.file)}`;
     }
 
     if (Object.keys(updateData).length === 0) {
